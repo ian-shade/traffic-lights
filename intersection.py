@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 import numpy as np
 from typing import Dict, List, Tuple
 from config import ArrivalCfg, SimCfg, LANE_OFF, ENTER, EXIT, STOP_LINE
-from signal import TwoPhaseSignal
+from traffic_signal import TwoPhaseSignal
 
 def path_straight(d):
     if d=="N": return lambda s:(+LANE_OFF, ENTER - s*(ENTER+EXIT))
