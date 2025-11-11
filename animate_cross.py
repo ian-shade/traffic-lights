@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt, matplotlib.animation as anim
 from config import ArrivalCfg, SimCfg, SignalCfg, LANE_OFF, STOP_LINE
-from signal import TwoPhaseSignal, PHASE_NS, PHASE_EW
+from traffic_signal import TwoPhaseSignal, PHASE_NS, PHASE_EW
 from intersection import IntersectionSim
 
 arr=ArrivalCfg(); sig=TwoPhaseSignal(SignalCfg()); sim=SimCfg()
@@ -49,5 +49,5 @@ def update(_):
     for k,v in lights.items(): paint(v,states[k])
     X,Y=world.scatter(); dots.set_data(X,Y); return [dots]+[p for t in lights.values() for p in t]
 
-anim.FuncAnimation(fig,update,interval=sim.realtime_ms,blit=True)
+ani = anim.FuncAnimation(fig, update, interval=sim.realtime_ms, blit=True, cache_frame_data=False)
 plt.show()
