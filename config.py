@@ -3,8 +3,7 @@ from dataclasses import dataclass
 LANE_OFF = 0.14
 ENTER = 1.20
 EXIT = 1.20
-STOP_LINE = 0.14   
-STOP_MARGIN = 0.35    
+STOP_LINE = 0.25 
 
 @dataclass
 class ArrivalCfg:
