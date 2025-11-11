@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt, matplotlib.animation as anim
 from config import ArrivalCfg, SimCfg, SignalCfg, LANE_OFF, STOP_LINE
-from traffic_signal import TwoPhaseSignal, PHASE_NS, PHASE_EW
+from traffic_signal import FourSignalController, MultiSignalCfg
 from intersection import IntersectionSim
 
-arr=ArrivalCfg(); sig=TwoPhaseSignal(SignalCfg()); sim=SimCfg()
-world=IntersectionSim(arr,sim,sig)
+arr = ArrivalCfg()
+sig = FourSignalController(MultiSignalCfg())   # nuevo controlador con 4 fases
+sim = SimCfg()
+world = IntersectionSim(arr, sim, sig)
 
 fig,ax=plt.subplots(figsize=(6,6))
 ax.set_xlim(-1.8,1.8); ax.set_ylim(-1.8,1.8); ax.axis("off")
@@ -58,13 +60,28 @@ def paint(triplet, state):
 
 def update(_):
     world.step()
-    if world.signal.amber_t>0: states={k:"amber" for k in "NESW"}
-    elif world.signal.allred_t>0: states={k:"red" for k in "NESW"}
+
+    # mapeo 1=S→N, 2=E→W, 3=W→E, 4=N→S
+    order = {"S": 0, "E": 1, "W": 2, "N": 3}
+
+    states = {}
+    if world.signal.amber_t > 0:
+        states = {k: "amber" for k in "NESW"}
+    elif world.signal.allred_t > 0:
+        states = {k: "red" for k in "NESW"}
     else:
-        if world.signal.phase==PHASE_NS: states={"N":"green","S":"green","E":"red","W":"red"}
-        else: states={"N":"red","S":"red","E":"green","W":"green"}
-    for k,v in lights.items(): paint(v,states[k])
-    X,Y=world.scatter(); dots.set_data(X,Y); return [dots]+[p for t in lights.values() for p in t]
+        for k in "NESW":
+            states[k] = "green" if world.signal.is_green(order[k]) else "red"
+
+    for k, v in lights.items():
+        paint(v, states[k])
+
+    X, Y = world.scatter()
+    dots.set_data(X, Y)
+
+    # opcional: ver la fase en la ventana
+    ax.set_title(f"Traffic Light 4 Intersections — Fase {world.signal.phase+1}")
+    return [dots] + [p for t in lights.values() for p in t]
 
 ani = anim.FuncAnimation(fig, update, interval=sim.realtime_ms, blit=True, cache_frame_data=False)
 plt.show()
