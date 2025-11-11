@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 import numpy as np
 from typing import Dict, List, Tuple
-from config import ArrivalCfg, SimCfg, LANE_OFF, ENTER, EXIT, STOP_LINE
+from config import ArrivalCfg, SimCfg, LANE_OFF, ENTER, EXIT, STOP_LINE, STOP_MARGIN
 from traffic_signal import TwoPhaseSignal
 
 def path_straight(d):
@@ -36,21 +36,59 @@ class IntersectionSim:
             self.signal.request_switch()
 
     def step(self):
-        self.spawn(); self.decide(); self.signal.step()
-        speed=self.sim.speed; gap=self.sim.gap_s
+        self.spawn()
+        self.decide()
+        self.signal.step()
+
+        speed = self.sim.speed
+        gap_s = self.sim.gap_s
+
+        # --- s en el que se ubica la línea de alto para cualquier dirección ---
+        # Para nuestras trayectorias rectas:
+        # N:  y =  ENTER - s*(ENTER+EXIT)  y_stop = +STOP_LINE
+        # S:  y = -ENTER + s*(ENTER+EXIT)  y_stop = -STOP_LINE
+        # E:  x =  ENTER - s*(ENTER+EXIT)  x_stop = +STOP_LINE
+        # W:  x = -ENTER + s*(ENTER+EXIT)  x_stop = -STOP_LINE
+        # => en todos los casos: s_stop = (ENTER - STOP_LINE) / (ENTER + EXIT)
+        STOP_AT = STOP_LINE + STOP_MARGIN
+        s_stop = (ENTER - STOP_LINE) / (ENTER + EXIT)
+        s_eps  = 1e-3
+
         for d in "NESW":
-            arr=self.q[d]
-            if not arr: continue
-            lead=arr[0]; x,y=lead.pos()
-            near=((d=="N" and y<=STOP_LINE) or (d=="S" and y>=-STOP_LINE) or
-                  (d=="E" and x<=STOP_LINE) or (d=="W" and x>=-STOP_LINE))
-            green=self.signal.green_ns() if d in("N","S") else self.signal.green_ew()
-            if not near or green:
-                lead.s=min(1.0,lead.s+speed)
-                if lead.s>=1.0: arr.pop(0)
-            for i in range(1,len(arr)):
-                car=arr[i]; target=min(1.0-1e-3,i*gap)
-                if car.s<target: car.s=min(target,car.s+speed*0.6)
+            arr = self.q[d]
+            if not arr:
+                continue
+
+            # ¿esta dirección tiene verde ahora?
+            green = (self.signal.green_ns() if d in ("N","S") else self.signal.green_ew())
+
+            # ----- líder -----
+            lead = arr[0]
+            if lead.s < s_stop - s_eps:
+                # puede acercarse a la línea de alto aunque esté en rojo (más lento)
+                lead.s = min(s_stop, lead.s + speed * 0.6)
+            else:
+                if green:
+                    # luz verde: puede cruzar el centro
+                    lead.s = min(1.0, lead.s + speed)
+                    if lead.s >= 1.0:
+                        arr.pop(0)
+                else:
+                    # luz roja: se queda EXACTO en la línea de alto
+                    lead.s = min(lead.s, s_stop)
+
+            # ----- seguidores -----
+            for i in range(1, len(arr)):
+                car = arr[i]
+                prev = arr[i-1]
+                # nunca pasar la línea de alto ni subirse al coche de adelante
+                target = min(s_stop - s_eps, prev.s - gap_s)
+                # si la cola está muy corta, mantenlos atrás sin chocar numéricamente
+                target = max(0.0, target)
+                if car.s < target:
+                    # se aproximan más lento que el líder para que no “empujen”
+                    car.s = min(target, car.s + speed * 0.6)
+
 
     def scatter(self):
         X,Y=[],[]

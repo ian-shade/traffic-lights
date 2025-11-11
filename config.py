@@ -3,7 +3,8 @@ from dataclasses import dataclass
 LANE_OFF = 0.14
 ENTER = 1.20
 EXIT = 1.20
-STOP_LINE = 0.14
+STOP_LINE = 0.14   
+STOP_MARGIN = 0.35    
 
 @dataclass
 class ArrivalCfg:
@@ -20,7 +21,8 @@ class SignalCfg:
 
 @dataclass
 class SimCfg:
-    realtime_ms: int = 900
-    speed: float = 0.020
-    gap_s: float = 0.06
+    realtime_ms: int = 500   
+    speed: float  = 0.035    
+    gap_s: float  = 0.06
     max_queue: int = 12
+
