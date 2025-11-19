@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt, matplotlib.animation as anim
 from config import ArrivalCfg, SimCfg, SignalCfg, LANE_OFF, STOP_LINE
-from traffic_signal import FourSignalController, MultiSignalCfg
 from intersection import IntersectionSim
+from traffic_signal import FourSignalController, MultiSignalCfg
 
 arr = ArrivalCfg()
-sig = FourSignalController(MultiSignalCfg())   # nuevo controlador con 4 fases
 sim = SimCfg()
+sig = FourSignalController(MultiSignalCfg(), tick_ms=sim.realtime_ms)
 world = IntersectionSim(arr, sim, sig)
 
 fig,ax=plt.subplots(figsize=(6,6))
@@ -62,7 +62,7 @@ def update(_):
     world.step()
 
     # mapeo 1=S→N, 2=E→W, 3=W→E, 4=N→S
-    order = {"S": 0, "E": 1, "W": 2, "N": 3}
+    order = {"S": 2, "E": 0, "W": 3, "N": 1}
 
     states = {}
     if world.signal.amber_t > 0:
