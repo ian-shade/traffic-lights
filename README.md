@@ -1,3 +1,2 @@
-# Traffic Light Cross (straight-only)
+# Traffic Light Cross
 
-Minimal sim plan.
