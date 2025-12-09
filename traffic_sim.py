@@ -28,6 +28,7 @@ class Car:
     speed: float
     committed: bool
     color: Tuple[int, int, int]
+    is_vip: bool = False 
 
 class TrafficController:
     def __init__(self):
@@ -40,7 +41,20 @@ class TrafficController:
         self.ns_state = LightState.GREEN
         self.ew_state = LightState.RED
 
-    def update(self, queue_stats: Dict[Direction, int]) -> None:
+    def update(
+        self,
+        queue_stats: Dict[Direction, int],
+        vip_queue_stats: Dict[Direction, int]
+    ) -> None:
+        # 1) Revisar primero si hay VIPs
+        ns_vips = vip_queue_stats[Direction.NORTH] + vip_queue_stats[Direction.SOUTH]
+        ew_vips = vip_queue_stats[Direction.EAST] + vip_queue_stats[Direction.WEST]
+
+        if ns_vips > 0 or ew_vips > 0:
+            self._handle_vip_preemption(ns_vips, ew_vips)
+            return  # No seguimos con la lógica normal
+
+        # 2) Lógica normal de cambio de fase
         elapsed = (datetime.now() - self.phase_start_time).total_seconds() * 1000
 
         if self.current_phase == "NS":
@@ -68,6 +82,7 @@ class TrafficController:
                     self.current_phase = "NS"
                     self.phase_start_time = datetime.now()
 
+
     def _should_switch_phase(self, queue_stats: Dict[Direction, int], elapsed: float) -> bool:
         if elapsed < self.min_green_duration:
             return False
@@ -81,6 +96,30 @@ class TrafficController:
             return True
 
         return False
+    
+    def _handle_vip_preemption(self, ns_vips: int, ew_vips: int) -> None:
+ 
+        if ns_vips > 0 and ew_vips == 0:
+            desired_phase = "NS"
+        elif ew_vips > 0 and ns_vips == 0:
+            desired_phase = "EW"
+        else:
+            # Si hay VIP en ambos ejes, por simplicidad mantenemos la fase actual
+            desired_phase = self.current_phase
+
+        self._set_phase_immediately(desired_phase)
+
+    def _set_phase_immediately(self, phase: str) -> None:
+        self.current_phase = phase
+        self.phase_start_time = datetime.now()
+
+        if phase == "NS":
+            self.ns_state = LightState.GREEN
+            self.ew_state = LightState.RED
+        else:  # "EW"
+            self.ns_state = LightState.RED
+            self.ew_state = LightState.GREEN
+
 
     def get_light_state(self, direction: Direction) -> LightState:
         if direction in [Direction.NORTH, Direction.SOUTH]:
@@ -107,6 +146,13 @@ class CarManager:
         (139, 92, 246),
         (236, 72, 153)
     ]
+    VIP_COLORS = [          # Colores muy llamativos para VIP
+        (255, 255, 255),    # blanco
+        (0, 200, 255),      # azul sirena
+        (255, 0, 0)         # rojo
+    ]
+
+    VIP_SPAWN_PROB = 0.03
 
     def __init__(self):
         self.cars: List[Car] = []
@@ -116,14 +162,23 @@ class CarManager:
         self.max_speed = 0.4
         self.min_distance = 40
 
-    def spawn_car(self, direction: Direction) -> None:
+    def spawn_car(self, direction: Direction, force_vip: bool = False)-> None:
+        
+        is_vip = force_vip or (random.random() < self.VIP_SPAWN_PROB)
+
+        if is_vip:
+            color = random.choice(self.VIP_COLORS)
+        else:
+            color = random.choice(self.CAR_COLORS)
+
         car = Car(
             id=f"car-{self.next_id}",
             direction=direction,
             position=0.0,
             speed=self.max_speed,
             committed=False,
-            color=random.choice(self.CAR_COLORS)
+            color=color,
+            is_vip=is_vip
         )
         self.next_id += 1
         self.cars.append(car)
@@ -194,6 +249,21 @@ class CarManager:
             and c.position <= self.stop_line_position
             and not c.committed
         ])
+    
+    def get_vip_queue_count(self, direction: Direction) -> int:
+        return len([
+            c for c in self.cars
+            if c.direction == direction
+            and c.is_vip
+            and c.position <= self.stop_line_position
+            and not c.committed
+        ])
+
+    def get_vip_directions_waiting(self) -> List[Direction]:
+        return [
+            d for d in Direction
+            if self.get_vip_queue_count(d) > 0
+        ]
 
     def get_cars(self) -> List[Car]:
         return self.cars
@@ -242,27 +312,6 @@ class TrafficSimulation:
         self.last_spawn_time = 0
         self.current_time = 0
 
-    def update(self, delta_time: float) -> None:
-        self.current_time += delta_time
-
-        if self.current_time - self.last_spawn_time > self.spawn_rate * 1000 + random.random() * 1000:
-            # Elegir una dirección aleatoria
-            direction = random.choice(list(Direction))
-            self.car_manager.spawn_car(direction)
-
-            # Actualizar último spawn
-            self.last_spawn_time = self.current_time
-
-        queue_stats = {
-            direction: self.car_manager.get_queue_count(direction)
-            for direction in Direction
-        }
-
-        self.traffic_controller.update(queue_stats)
-        self.car_manager.update_cars(
-            lambda d: self.traffic_controller.get_light_state(d),
-            delta_time
-        )
 
     def draw_traffic_light(self, x: int, y: int, state: LightState, horizontal: bool = False) -> None:
         red_color = (255, 0, 0) if state == LightState.RED else (139, 0, 0)
@@ -314,12 +363,39 @@ class TrafficSimulation:
             y = center_y + 375
             width, height = 30, 20
 
+        car_rect = pygame.Rect(
+            x - width // 2,
+            y - height // 2,
+            width,
+            height
+        )
+
+        # Cuerpo del coche
         pygame.draw.rect(
             self.screen,
             car.color,
-            (x - width // 2, y - height // 2, width, height),
+            car_rect,
             border_radius=2
         )
+
+        # Si es VIP, dibujamos borde y "sirena" arriba
+        if car.is_vip:
+            # Borde blanco
+            pygame.draw.rect(
+                self.screen,
+                (255, 255, 255),
+                car_rect,
+                width=2,
+                border_radius=2
+            )
+            # Sirena
+            pygame.draw.circle(
+                self.screen,
+                (0, 200, 255),
+                (car_rect.centerx, car_rect.top),
+                4
+            )
+
     
 
     
@@ -452,6 +528,38 @@ class TrafficSimulation:
         time_remaining = self.traffic_controller.get_phase_time_remaining() / 1000
         time_text = self.font_large.render(f"{time_remaining:.1f}s", True, (0, 150, 200))
         self.screen.blit(time_text, (20, y_offset))
+
+    def update(self, delta_time: float) -> None:
+        # delta_time ya viene en milisegundos (por tu cálculo en run)
+        self.current_time += delta_time
+
+        # Spawnear coches (algunos serán VIP aleatoriamente)
+        if self.current_time - self.last_spawn_time > self.spawn_rate * 1000 + random.random() * 1000:
+            direction = random.choice(list(Direction))
+            self.car_manager.spawn_car(direction)
+            self.last_spawn_time = self.current_time
+
+        # Colas normales
+        queue_stats = {
+            direction: self.car_manager.get_queue_count(direction)
+            for direction in Direction
+        }
+
+        # Colas de VIPs
+        vip_queue_stats = {
+            direction: self.car_manager.get_vip_queue_count(direction)
+            for direction in Direction
+        }
+
+        # Actualizar controlador de tráfico con prioridad a VIP
+        self.traffic_controller.update(queue_stats, vip_queue_stats)
+
+        # Mover coches según el estado de los semáforos
+        self.car_manager.update_cars(
+            lambda d: self.traffic_controller.get_light_state(d),
+            delta_time
+        )
+
 
     def draw(self) -> None:
         self.screen.fill((40, 40, 40))
