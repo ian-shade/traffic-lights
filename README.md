@@ -121,28 +121,4 @@ VIP cars automatically trigger green-light priority.
 ```
 python train_q_learning_advanced.py
 ```
-
-The training process may take several minutes depending on hardware.
-
 ---
-
-## 🎯 Future Improvements
-
-- Integrate the RL agent into the Pygame simulation  
-- Extend state representation (e.g., include VIP status or time-of-day)  
-- Replace tabular Q-learning with Deep Q-Learning (DQN)  
-- Implement turning lanes and multi-phase traffic logic  
-- Add stochastic peak-hour traffic patterns  
-
----
-
-## 🧑‍💻 Notes
-
-This project was created for learning and academic purposes to practice:
-- Reinforcement learning  
-- Reward shaping  
-- Environment engineering  
-- Performance analysis  
-- Real-time simulation  
-
-The focus is clarity and correctness rather than production readiness.
