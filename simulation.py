@@ -8,6 +8,7 @@ import pygame
 from models import Direction, LightState, Car
 from traffic_controller import TrafficController
 from car_manager import CarManager
+from controllers import FixedTimeController, ActuatedThresholdController, MaxPressureController, FuzzyController, QTableController
 
 
 class TrafficSimulation:
@@ -29,10 +30,23 @@ class TrafficSimulation:
         self.traffic_controller = TrafficController()  # manages traffic lights
         self.car_manager = CarManager()                # creates and moves cars
 
+        # Controller modes
+        self.controller_name = "fixed_time"
+        self._apply_controller(self.controller_name)
+
+        self.metrics = {
+            "time": [],
+            "total_queue": [],
+            "vip_queue": [],
+            "phase": []
+        }
+
         # Car spawning settings
         self.spawn_rate = 2.0      # seconds between random spawns
         self.last_spawn_time = 0
         self.current_time = 0
+
+        self.metrics = {"time": [], "total_queue": [], "vip_queue": [], "phase": []}
 
         self.running = True
 
@@ -40,6 +54,7 @@ class TrafficSimulation:
         """Handles keyboard and window events."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                self.export_current_metrics()
                 self.running = False
 
             elif event.type == pygame.KEYDOWN:
@@ -53,22 +68,73 @@ class TrafficSimulation:
                 elif event.key == pygame.K_r:
                     self.reset()
 
-                # Optional: manually spawn VIP cars for testing
+
+                # Switch controller mode (also resets sim)
                 elif event.key == pygame.K_1:
-                    self.car_manager.spawn_car(Direction.NORTH, force_vip=True)
+                    self.controller_name = "fixed_time"
+                    self.reset()
                 elif event.key == pygame.K_2:
-                    self.car_manager.spawn_car(Direction.SOUTH, force_vip=True)
+                    self.controller_name = "actuated"
+                    self.reset()
                 elif event.key == pygame.K_3:
-                    self.car_manager.spawn_car(Direction.EAST, force_vip=True)
+                    self.controller_name = "max_pressure"
+                    self.reset()
                 elif event.key == pygame.K_4:
+                    self.controller_name = "fuzzy"
+                    self.reset()
+                elif event.key == pygame.K_5:
+                    self.controller_name = "q_learning"
+                    self.reset()
+
+                # Export metrics anytime
+                elif event.key == pygame.K_m:
+                    self.export_current_metrics()
+
+                # Optional: manually spawn VIP cars for testing
+                elif event.key == pygame.K_n:
+                    self.car_manager.spawn_car(Direction.NORTH, force_vip=True)
+                elif event.key == pygame.K_s:
+                    self.car_manager.spawn_car(Direction.SOUTH, force_vip=True)
+                elif event.key == pygame.K_e:
+                    self.car_manager.spawn_car(Direction.EAST, force_vip=True)
+                elif event.key == pygame.K_w:
                     self.car_manager.spawn_car(Direction.WEST, force_vip=True)
 
     def reset(self) -> None:
         """Resets the simulation state."""
         self.traffic_controller = TrafficController()
+        self._apply_controller(self.controller_name)
         self.car_manager = CarManager()
         self.last_spawn_time = 0
         self.current_time = 0
+
+        self.metrics = {"time": [], "total_queue": [], "vip_queue": [], "phase": []}
+
+
+    def _apply_controller(self, name: str) -> None:
+        """Attach the selected controller to the TrafficController."""
+        name = (name or "fixed_time").lower()
+        self.controller_name = name
+
+        if name == "fixed_time":
+            self.traffic_controller.set_controller(FixedTimeController(switch_every_s=30))
+        elif name == "actuated":
+            self.traffic_controller.set_controller(ActuatedThresholdController())
+        elif name == "max_pressure":
+            self.traffic_controller.set_controller(MaxPressureController())
+        elif name == "fuzzy":
+            self.traffic_controller.set_controller(FuzzyController())
+        elif name == "q_learning":
+            self.traffic_controller.set_controller(QTableController("q_table_advanced.json"))
+        else:
+            # default fallback
+            self.traffic_controller.set_controller(FixedTimeController(switch_every_s=30))
+            self.controller_name = "fixed_time"
+
+    def export_current_metrics(self) -> None:
+        """Exports metrics with a filename based on the current controller."""
+        filename = f"metrics_{self.controller_name}.csv"
+        self.export_metrics(filename)
 
     def draw_traffic_light(self, x: int, y: int, state: LightState, horizontal: bool = False) -> None:
         """Draws a single traffic light at the given position."""
@@ -114,7 +180,7 @@ class TrafficSimulation:
             y = center_y + 375
             width, height = 30, 20
 
-        # Draw the car body
+        # Draw the car
         car_rect = pygame.Rect(x - width // 2, y - height // 2, width, height)
         pygame.draw.rect(self.screen, car.color, car_rect, border_radius=2)
 
@@ -189,34 +255,37 @@ class TrafficSimulation:
     def draw_control_panel(self) -> None:
         """Displays spawn rate, queue counts and phase time."""
         panel_width = 300
-
+        panel_height = 520 
+    
         # Background box
-        pygame.draw.rect(self.screen, (255, 255, 255), (10, 10, panel_width, 400), border_radius=8)
-        pygame.draw.rect(self.screen, (200, 200, 200), (10, 10, panel_width, 400), 2, border_radius=8)
-
+        pygame.draw.rect(self.screen, (255, 255, 255), (10, 10, panel_width, panel_height), border_radius=8)
+        pygame.draw.rect(self.screen, (200, 200, 200), (10, 10, panel_width, panel_height), 2, border_radius=8)
+    
+        panel_x = 20
         y_offset = 20
+    
         title = self.font_large.render("Traffic Control", True, (30, 30, 30))
-        self.screen.blit(title, (20, y_offset))
+        self.screen.blit(title, (panel_x, y_offset))
         y_offset += 40
-
+    
         # Spawn rate display
         spawn_label = self.font_medium.render("Spawn Rate:", True, (50, 50, 50))
-        self.screen.blit(spawn_label, (20, y_offset))
+        self.screen.blit(spawn_label, (panel_x, y_offset))
         spawn_value = self.font_medium.render(f"{self.spawn_rate:.1f}s", True, (0, 100, 200))
-        self.screen.blit(spawn_value, (220, y_offset))
+        self.screen.blit(spawn_value, (panel_x + 200, y_offset))
         y_offset += 35
-
-        self.screen.blit(self.font_small.render("UP/DOWN: Adjust spawn rate", True, (100, 100, 100)), (20, y_offset))
+    
+        self.screen.blit(self.font_small.render("UP/DOWN: Adjust spawn rate", True, (100, 100, 100)), (panel_x, y_offset))
         y_offset += 25
-
-        self.screen.blit(self.font_small.render("R: Reset simulation", True, (100, 100, 100)), (20, y_offset))
+    
+        self.screen.blit(self.font_small.render("R: Reset simulation", True, (100, 100, 100)), (panel_x, y_offset))
         y_offset += 40
-
+    
         # Queue sizes
         queue_title = self.font_medium.render("Queue Status:", True, (50, 50, 50))
-        self.screen.blit(queue_title, (20, y_offset))
+        self.screen.blit(queue_title, (panel_x, y_offset))
         y_offset += 30
-
+    
         # These names correspond to what the user sees on-screen
         counts: Dict[str, int] = {
             "North": self.car_manager.get_queue_count(Direction.SOUTH),
@@ -224,26 +293,58 @@ class TrafficSimulation:
             "East":  self.car_manager.get_queue_count(Direction.WEST),
             "West":  self.car_manager.get_queue_count(Direction.EAST),
         }
-
+    
         for name, count in counts.items():
             txt = self.font_small.render(f"{name}: {count}", True, (50, 50, 50))
-            self.screen.blit(txt, (30, y_offset))
+            self.screen.blit(txt, (panel_x + 10, y_offset))
             y_offset += 25
-
+    
         # Phase timer
         y_offset += 10
-        self.screen.blit(self.font_medium.render("Phase Time:", True, (50, 50, 50)), (20, y_offset))
+        self.screen.blit(self.font_medium.render("Phase Time:", True, (50, 50, 50)), (panel_x, y_offset))
         y_offset += 30
-
+    
         time_remaining = self.traffic_controller.get_phase_time_remaining() / 1000
         txt_time = self.font_large.render(f"{time_remaining:.1f}s", True, (0, 150, 200))
-        self.screen.blit(txt_time, (20, y_offset))
+        self.screen.blit(txt_time, (panel_x, y_offset))
+        y_offset += 55
+    
+        # =========================
+        # Controls legend (with active highlight)
+        # =========================
+        self.screen.blit(self.font_small.render("Controls:", True, (50, 50, 50)), (panel_x, y_offset))
+        y_offset += 20
+    
+        # Tiny font for compact list
+        if not hasattr(self, "font_tiny"):
+            self.font_tiny = pygame.font.SysFont(None, 18)
+    
+        active = getattr(self, "controller_name", "fixed")  # <- aquí lee tu controlador activo
+        active_color = (255, 140, 0)  # naranja
+        normal_color = (60, 60, 60)
+    
+        controls = [
+            ("fixed", "1 – Fixed-time"),
+            ("actuated", "2 – Actuated (rule-based)"),
+            ("max_pressure", "3 – Max-pressure"),
+            ("fuzzy", "4 – Fuzzy logic"),
+            ("q_learning", "5 – Q-learning"),
+            ("export", "E – Export metrics"),
+        ]
+    
+        line_gap = 14
+        for key, label in controls:
+            color = active_color if key == active else normal_color
+            if key == "export":
+                color = normal_color
+            txt = self.font_tiny.render(label, True, color)
+            self.screen.blit(txt, (panel_x + 10, y_offset))
+            y_offset += line_gap
 
     def update(self, delta_time: float) -> None:
-        """Main update loop: spawns cars, updates lights, moves cars."""
         self.current_time += delta_time
 
-        # Random spawn (with some randomness added)
+        # Random spawn (with some randomness)
         if self.current_time - self.last_spawn_time > self.spawn_rate * 1000 + random.random() * 1000:
             direction = random.choice(list(Direction))
             self.car_manager.spawn_car(direction)
@@ -253,7 +354,6 @@ class TrafficSimulation:
         queue_stats = {d: self.car_manager.get_queue_count(d) for d in Direction}
         vip_queue_stats = {d: self.car_manager.get_vip_queue_count(d) for d in Direction}
 
-        # Update traffic lights (VIPs have priority)
         self.traffic_controller.update(queue_stats, vip_queue_stats)
 
         # Move cars according to light rules
@@ -262,10 +362,37 @@ class TrafficSimulation:
             delta_time
         )
 
+        total_queue = sum(queue_stats.values())
+        vip_total_queue = sum(vip_queue_stats.values())
+
+        self.metrics["time"].append(self.current_time / 1000.0)  # seconds
+        self.metrics["total_queue"].append(total_queue)
+        self.metrics["vip_queue"].append(vip_total_queue)
+        self.metrics["phase"].append(self.traffic_controller.current_phase)
+
+    def export_metrics(self, filename="metrics.csv"):
+        import csv
+        with open(filename, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["time_s", "total_queue", "vip_queue", "phase"])
+            for i in range(len(self.metrics["time"])):
+                writer.writerow([
+                    self.metrics["time"][i],
+                    self.metrics["total_queue"][i],
+                    self.metrics["vip_queue"][i],
+                    self.metrics["phase"][i]
+                ])
+
+
     def draw(self) -> None:
         """Clears the screen and redraws everything."""
         self.screen.fill((40, 40, 40))
         self.draw_intersection()
+
+        # Overlay current controller
+        ctrl_text = self.font_medium.render(f"Controller: {self.controller_name}", True, (230, 230, 230))
+        self.screen.blit(ctrl_text, (15, 10))
+
         self.draw_control_panel()
         pygame.display.flip()
 
