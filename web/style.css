@@ -302,6 +302,73 @@ body {
     align-items: center;
     padding: 2rem;
     position: relative;
+    overflow: hidden;
+}
+
+/* Stats Box - Top Right */
+.stats-box {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    background: rgba(30, 41, 59, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 2px solid var(--border-color);
+    padding: 1rem;
+    pointer-events: all;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    min-width: 200px;
+}
+
+.stats-box-section {
+    padding: 0.5rem 0;
+}
+
+.stats-box-section h4 {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.stats-box-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 0.5rem 0;
+}
+
+.stats-compact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.stat-compact {
+    background: rgba(15, 23, 42, 0.6);
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid rgba(71, 85, 105, 0.5);
+}
+
+.stat-compact.wide {
+    grid-column: 1 / -1;
+}
+
+.stat-compact-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.stat-compact-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-color);
 }
 
 #canvas {
@@ -309,6 +376,11 @@ body {
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     border: 2px solid var(--border-color);
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
 }
 
 .canvas-overlay {
@@ -364,6 +436,11 @@ body {
     .header h1 {
         font-size: 1.5rem;
     }
+
+    .stats-box {
+        min-width: 180px;
+        padding: 0.8rem;
+    }
 }
 
 @media (max-width: 900px) {
@@ -374,5 +451,24 @@ body {
     .sidebar {
         width: 100%;
         max-height: 300px;
+    }
+
+    .stats-box {
+        top: 1rem;
+        right: 1rem;
+        min-width: 160px;
+        padding: 0.7rem;
+    }
+
+    .stats-box-section h4 {
+        font-size: 0.7rem;
+    }
+
+    .stat-compact-label {
+        font-size: 0.65rem;
+    }
+
+    .stat-compact-value {
+        font-size: 0.9rem;
     }
 }

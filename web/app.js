@@ -15,7 +15,37 @@ class TrafficSimulationClient {
 
         this.initSocket();
         this.initControls();
+        this.setupResponsiveCanvas();
         this.startRenderLoop();
+    }
+
+    setupResponsiveCanvas() {
+        const resizeCanvas = () => {
+            const container = this.canvas.parentElement;
+            const containerRect = container.getBoundingClientRect();
+
+            // Account for padding (2rem = 32px on each side)
+            const padding = 64;
+            const maxWidth = containerRect.width - padding;
+            const maxHeight = containerRect.height - padding;
+
+            // Make canvas size based on the smaller dimension to keep it square
+            const size = Math.min(maxWidth, maxHeight);
+
+            this.canvas.width = size;
+            this.canvas.height = size;
+        };
+
+        // Initial resize
+        resizeCanvas();
+
+        // Resize on window resize
+        window.addEventListener('resize', resizeCanvas);
+
+        // Also resize when sidebar might change (like on mobile)
+        window.addEventListener('orientationchange', () => {
+            setTimeout(resizeCanvas, 100);
+        });
     }
 
     initSocket() {
@@ -163,6 +193,29 @@ class TrafficSimulationClient {
                 btn.classList.remove('active');
             }
         });
+
+        // Update sliders to match backend state
+        if (state.spawn_rate !== undefined) {
+            const spawnRateSlider = document.getElementById('spawnRate');
+            const spawnRateValue = document.getElementById('spawnRateValue');
+            if (spawnRateSlider && parseFloat(spawnRateSlider.value) !== state.spawn_rate) {
+                spawnRateSlider.value = state.spawn_rate;
+                if (spawnRateValue) {
+                    spawnRateValue.textContent = `${state.spawn_rate.toFixed(1)}s`;
+                }
+            }
+        }
+
+        if (state.speed_multiplier !== undefined) {
+            const speedSlider = document.getElementById('simSpeed');
+            const speedValue = document.getElementById('speedValue');
+            if (speedSlider && parseFloat(speedSlider.value) !== state.speed_multiplier) {
+                speedSlider.value = state.speed_multiplier;
+                if (speedValue) {
+                    speedValue.textContent = `${state.speed_multiplier.toFixed(2)}x`;
+                }
+            }
+        }
     }
 
     startRenderLoop() {

@@ -60,6 +60,9 @@ class SimulationState:
         self.car_manager = CarManager()
         self.last_spawn_time = 0
         self.current_time = 0
+        self.running = False
+        self.spawn_rate = 2.0
+        self.speed_multiplier = 1.0
 
     def update(self, delta_time: float):
         self.current_time += delta_time
@@ -72,7 +75,7 @@ class SimulationState:
         queue_stats = {d: self.car_manager.get_queue_count(d) for d in Direction}
         vip_queue_stats = {d: self.car_manager.get_vip_queue_count(d) for d in Direction}
 
-        self.traffic_controller.update(queue_stats, vip_queue_stats)
+        self.traffic_controller.update(queue_stats, vip_queue_stats, delta_time)
         self.car_manager.update_cars(
             lambda d: self.traffic_controller.get_light_state(d),
             delta_time

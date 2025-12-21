@@ -17,7 +17,7 @@ class TrafficController:
     def __init__(self):
         # Current active axis ("NS" or "EW")
         self.current_phase = "NS"
-        self.phase_start_time = datetime.now()
+        self.phase_start_time = 0.0  # Use simulated time instead of datetime
 
         # Light durations (ms)
         self.green_duration = 30000         # nominal green if no early-switch
@@ -30,6 +30,9 @@ class TrafficController:
 
         # Optional external controller (must implement act(...) -> 0/1)
         self.decision_controller: Optional[Any] = None
+
+        # Simulated time tracker
+        self.simulated_time = 0.0
 
     # --- Public API ---------------------------------------------------------
     def set_controller(self, controller: Optional[Any]) -> None:
@@ -52,8 +55,16 @@ class TrafficController:
             return self.ns_state
         return self.ew_state
 
-    def update(self, queue_stats: Dict[Direction, int], vip_queue_stats: Dict[Direction, int]) -> None:
-        """Update lights based on timing, VIP preemption, and optional controller."""
+    def update(self, queue_stats: Dict[Direction, int], vip_queue_stats: Dict[Direction, int], delta_time: float = 16.67) -> None:
+        """Update lights based on timing, VIP preemption, and optional controller.
+
+        Args:
+            queue_stats: Car queue counts per direction
+            vip_queue_stats: VIP car queue counts per direction
+            delta_time: Time elapsed since last update in milliseconds
+        """
+        # Update simulated time
+        self.simulated_time += delta_time
 
         # VIP totals per axis
         ns_vips = vip_queue_stats[Direction.NORTH] + vip_queue_stats[Direction.SOUTH]
@@ -64,35 +75,35 @@ class TrafficController:
             self._handle_vip_preemption(ns_vips, ew_vips)
             return
 
-        elapsed = (datetime.now() - self.phase_start_time).total_seconds() * 1000.0
+        elapsed = self.simulated_time - self.phase_start_time
 
         if self.current_phase == "NS":
             if self.ns_state == LightState.GREEN:
                 should_switch = self._should_switch_phase(queue_stats, elapsed)
                 if elapsed >= self.green_duration or should_switch:
                     self.ns_state = LightState.YELLOW
-                    self.phase_start_time = datetime.now()
+                    self.phase_start_time = self.simulated_time
 
             elif self.ns_state == LightState.YELLOW:
                 if elapsed >= self.yellow_duration:
                     self.ns_state = LightState.RED
                     self.ew_state = LightState.GREEN
                     self.current_phase = "EW"
-                    self.phase_start_time = datetime.now()
+                    self.phase_start_time = self.simulated_time
 
         else:  # EW phase
             if self.ew_state == LightState.GREEN:
                 should_switch = self._should_switch_phase(queue_stats, elapsed)
                 if elapsed >= self.green_duration or should_switch:
                     self.ew_state = LightState.YELLOW
-                    self.phase_start_time = datetime.now()
+                    self.phase_start_time = self.simulated_time
 
             elif self.ew_state == LightState.YELLOW:
                 if elapsed >= self.yellow_duration:
                     self.ew_state = LightState.RED
                     self.ns_state = LightState.GREEN
                     self.current_phase = "NS"
-                    self.phase_start_time = datetime.now()
+                    self.phase_start_time = self.simulated_time
 
     # --- Internal decision logic -------------------------------------------
     def _should_switch_phase(self, queue_stats: Dict[Direction, int], elapsed_ms: float) -> bool:
@@ -154,17 +165,14 @@ class TrafficController:
             self.ns_state = LightState.RED
             self.ew_state = LightState.GREEN
 
-        self.phase_start_time = datetime.now()
+        self.phase_start_time = self.simulated_time
 
     def get_phase_time_remaining(self) -> float:
         """
         Devuelve el tiempo restante (ms) de la fase actual (GREEN/YELLOW).
         Si estás en RED, regresa 0.
         """
-        from datetime import datetime
-        from models import LightState
-    
-        elapsed = (datetime.now() - self.phase_start_time).total_seconds() * 1000.0
+        elapsed = self.simulated_time - self.phase_start_time
 
         # Estado actual según la fase activa
         current_state = self.ns_state if self.current_phase == "NS" else self.ew_state
@@ -173,6 +181,6 @@ class TrafficController:
             return max(0.0, float(self.green_duration) - elapsed)
         elif current_state == LightState.YELLOW:
             return max(0.0, float(self.yellow_duration) - elapsed)
-    
+
         return 0.0
 

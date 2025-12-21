@@ -70,55 +70,57 @@
                         <button class="vip-btn" data-direction="WEST">⬅️ West</button>
                     </div>
                 </div>
-
-                <div class="control-section">
-                    <h3>Queue Status</h3>
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <span class="stat-label">North</span>
-                            <span class="stat-value" id="queueNorth">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">South</span>
-                            <span class="stat-value" id="queueSouth">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">East</span>
-                            <span class="stat-value" id="queueEast">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">West</span>
-                            <span class="stat-value" id="queueWest">0</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="control-section">
-                    <h3>Phase Info</h3>
-                    <div class="stats-grid">
-                        <div class="stat-item wide">
-                            <span class="stat-label">Time Remaining</span>
-                            <span class="stat-value" id="phaseTime">30.0s</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Total Cars</span>
-                            <span class="stat-value" id="totalCars">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">VIP Cars</span>
-                            <span class="stat-value vip-highlight" id="vipCars">0</span>
-                        </div>
-                    </div>
-                </div>
             </aside>
 
             <!-- Main Canvas Area -->
             <main class="canvas-area">
-                <canvas id="canvas" width="1000" height="800"></canvas>
+                <canvas id="canvas"></canvas>
                 <div class="canvas-overlay">
                     <div id="loadingOverlay" class="loading-overlay">
                         <div class="spinner"></div>
                         <p>Connecting to server...</p>
+                    </div>
+                    <!-- Stats Box - Top Right -->
+                    <div class="stats-box">
+                        <div class="stats-box-section">
+                            <h4>Queue Status</h4>
+                            <div class="stats-compact-grid">
+                                <div class="stat-compact">
+                                    <span class="stat-compact-label">N</span>
+                                    <span class="stat-compact-value" id="queueNorth">0</span>
+                                </div>
+                                <div class="stat-compact">
+                                    <span class="stat-compact-label">S</span>
+                                    <span class="stat-compact-value" id="queueSouth">0</span>
+                                </div>
+                                <div class="stat-compact">
+                                    <span class="stat-compact-label">E</span>
+                                    <span class="stat-compact-value" id="queueEast">0</span>
+                                </div>
+                                <div class="stat-compact">
+                                    <span class="stat-compact-label">W</span>
+                                    <span class="stat-compact-value" id="queueWest">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stats-box-divider"></div>
+                        <div class="stats-box-section">
+                            <h4>Phase Info</h4>
+                            <div class="stats-compact-grid">
+                                <div class="stat-compact wide">
+                                    <span class="stat-compact-label">Time</span>
+                                    <span class="stat-compact-value" id="phaseTime">30.0s</span>
+                                </div>
+                                <div class="stat-compact">
+                                    <span class="stat-compact-label">Cars</span>
+                                    <span class="stat-compact-value" id="totalCars">0</span>
+                                </div>
+                                <div class="stat-compact">
+                                    <span class="stat-compact-label">VIP</span>
+                                    <span class="stat-compact-value vip-highlight" id="vipCars">0</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>
