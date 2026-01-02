@@ -6,3 +6,7 @@ __pycache__/
 .docs/*
 /env
 /docs
+
+# Generated data and results
+metrics/
+results/
