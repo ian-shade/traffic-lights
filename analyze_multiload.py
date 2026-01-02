@@ -6,9 +6,9 @@ import os
 
 os.makedirs("results/multiload", exist_ok=True)
 
-light_files = sorted(glob.glob("metrics_*_light.csv"))
-normal_files = sorted(glob.glob("metrics_*_normal.csv"))
-heavy_files = sorted(glob.glob("metrics_*_heavy.csv"))
+light_files = sorted(glob.glob("metrics/metrics_*_light.csv"))
+normal_files = sorted(glob.glob("metrics/metrics_*_normal.csv"))
+heavy_files = sorted(glob.glob("metrics/metrics_*_heavy.csv"))
 
 if not (light_files and normal_files and heavy_files):
     print("Error: Run run_multiload_experiments.py first to generate data")

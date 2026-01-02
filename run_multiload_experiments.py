@@ -6,6 +6,8 @@ os.environ['SDL_VIDEODRIVER'] = 'dummy'
 import pygame
 from simulation import TrafficSimulation
 
+os.makedirs("metrics", exist_ok=True)
+
 configs = [
     {"name": "light", "spawn_rate": 3.5, "duration": 120},
     {"name": "normal", "spawn_rate": 2.0, "duration": 120},
@@ -43,7 +45,7 @@ for config in configs:
 
         elapsed = time.time() - start_time
 
-        filename = f"metrics_{ctrl}_{load_name}.csv"
+        filename = f"metrics/metrics_{ctrl}_{load_name}.csv"
         sim.export_metrics(filename)
 
         print(f"done ({elapsed:.1f}s real-time)")
@@ -53,14 +55,11 @@ for config in configs:
 print("\n" + "="*60)
 print("EXPERIMENT COMPLETE")
 print("="*60)
-print("\nGenerated files:")
+print("\nGenerated files in metrics/ folder:")
 for config in configs:
     for ctrl in controllers:
         print(f"  - metrics_{ctrl}_{config['name']}.csv")
 
-print("\nNext steps:")
-print("  1. Organize files: mkdir -p results/light results/normal results/heavy")
-print("  2. Move files: mv metrics_*_light.csv results/light/")
-print("  3. Run compare_results.py in each folder")
-print("  4. Compare across loads")
+print("\nNext step:")
+print("  Run: python analyze_multiload.py")
 print("="*60)

@@ -6,10 +6,10 @@ import numpy as np
 
 os.makedirs("results", exist_ok=True)
 
-FILES = sorted(glob.glob("metrics_*.csv"))
+FILES = sorted(glob.glob("metrics/metrics_*.csv"))
 
 if not FILES:
-    raise FileNotFoundError("No metrics_*.csv found. Run simulation and export metrics first.")
+    raise FileNotFoundError("No metrics/metrics_*.csv found. Run simulation and export metrics first.")
 
 def pretty(path: str) -> str:
     base = os.path.splitext(os.path.basename(path))[0]

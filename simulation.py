@@ -136,8 +136,9 @@ class TrafficSimulation:
             self.controller_name = "fixed_time"
 
     def export_current_metrics(self) -> None:
-        """Exports metrics with a filename based on the current controller."""
-        filename = f"metrics_{self.controller_name}.csv"
+        import os
+        os.makedirs("metrics", exist_ok=True)
+        filename = f"metrics/metrics_{self.controller_name}.csv"
         self.export_metrics(filename)
 
     def draw_traffic_light(self, x: int, y: int, state: LightState, horizontal: bool = False) -> None:
