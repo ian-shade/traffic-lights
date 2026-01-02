@@ -6,10 +6,11 @@ import numpy as np
 
 os.makedirs("results", exist_ok=True)
 
-FILES = sorted(glob.glob("metrics/metrics_*.csv"))
+all_files = sorted(glob.glob("metrics/metrics_*.csv"))
+FILES = [f for f in all_files if not any(x in f for x in ["_light", "_normal", "_heavy"])]
 
 if not FILES:
-    raise FileNotFoundError("No metrics/metrics_*.csv found. Run simulation and export metrics first.")
+    raise FileNotFoundError("No metrics/metrics_*.csv found. Run generate_metrics.py first.")
 
 def pretty(path: str) -> str:
     base = os.path.splitext(os.path.basename(path))[0]
