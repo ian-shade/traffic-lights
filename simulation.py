@@ -8,7 +8,7 @@ import pygame
 from models import Direction, LightState, Car
 from traffic_controller import TrafficController
 from car_manager import CarManager
-from controllers import FixedTimeController, ActuatedThresholdController, MaxPressureController, FuzzyController, QTableController
+from controllers import ActuatedThresholdController, MaxPressureController, QTableController
 
 
 class TrafficSimulation:
@@ -31,7 +31,7 @@ class TrafficSimulation:
         self.car_manager = CarManager()                # creates and moves cars
 
         # Controller modes
-        self.controller_name = "fixed_time"
+        self.controller_name = "actuated"
         self._apply_controller(self.controller_name)
 
         self.metrics = {
@@ -73,18 +73,12 @@ class TrafficSimulation:
 
                 # Switch controller mode (also resets sim)
                 elif event.key == pygame.K_1:
-                    self.controller_name = "fixed_time"
-                    self.reset()
-                elif event.key == pygame.K_2:
                     self.controller_name = "actuated"
                     self.reset()
-                elif event.key == pygame.K_3:
+                elif event.key == pygame.K_2:
                     self.controller_name = "max_pressure"
                     self.reset()
-                elif event.key == pygame.K_4:
-                    self.controller_name = "fuzzy"
-                    self.reset()
-                elif event.key == pygame.K_5:
+                elif event.key == pygame.K_3:
                     self.controller_name = "q_learning"
                     self.reset()
 
@@ -117,23 +111,19 @@ class TrafficSimulation:
 
     def _apply_controller(self, name: str) -> None:
         """Attach the selected controller to the TrafficController."""
-        name = (name or "fixed_time").lower()
+        name = (name or "actuated").lower()
         self.controller_name = name
 
-        if name == "fixed_time":
-            self.traffic_controller.set_controller(FixedTimeController(switch_every_s=30))
-        elif name == "actuated":
+        if name == "actuated":
             self.traffic_controller.set_controller(ActuatedThresholdController())
         elif name == "max_pressure":
             self.traffic_controller.set_controller(MaxPressureController())
-        elif name == "fuzzy":
-            self.traffic_controller.set_controller(FuzzyController())
         elif name == "q_learning":
             self.traffic_controller.set_controller(QTableController("q_table_advanced.json"))
         else:
             # default fallback
-            self.traffic_controller.set_controller(FixedTimeController(switch_every_s=30))
-            self.controller_name = "fixed_time"
+            self.traffic_controller.set_controller(ActuatedThresholdController())
+            self.controller_name = "actuated"
 
     def export_current_metrics(self) -> None:
         import os
@@ -329,12 +319,10 @@ class TrafficSimulation:
         normal_color = (60, 60, 60)
     
         controls = [
-            ("fixed", "1 – Fixed-time"),
-            ("actuated", "2 – Actuated (rule-based)"),
-            ("max_pressure", "3 – Max-pressure"),
-            ("fuzzy", "4 – Fuzzy logic"),
-            ("q_learning", "5 – Q-learning"),
-            ("export", "E – Export metrics"),
+            ("actuated", "1 – Actuated (rule-based)"),
+            ("max_pressure", "2 – Max-pressure"),
+            ("q_learning", "3 – Q-learning"),
+            ("export", "M – Export metrics"),
         ]
     
         line_gap = 14

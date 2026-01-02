@@ -12,10 +12,8 @@ from models import Direction, LightState, Car
 from traffic_controller import TrafficController
 from car_manager import CarManager
 from controllers import (
-    FixedTimeController,
     ActuatedThresholdController,
     MaxPressureController,
-    FuzzyController,
     QTableController
 )
 
@@ -28,7 +26,7 @@ class SimulationState:
     def __init__(self):
         self.traffic_controller = TrafficController()
         self.car_manager = CarManager()
-        self.controller_name = "fixed_time"
+        self.controller_name = "actuated"
         self.spawn_rate = 2.0
         self.last_spawn_time = 0
         self.current_time = 0
@@ -37,22 +35,18 @@ class SimulationState:
         self._apply_controller(self.controller_name)
 
     def _apply_controller(self, name: str):
-        name = (name or "fixed_time").lower()
+        name = (name or "actuated").lower()
         self.controller_name = name
 
-        if name == "fixed_time":
-            self.traffic_controller.set_controller(FixedTimeController(switch_every_s=30))
-        elif name == "actuated":
+        if name == "actuated":
             self.traffic_controller.set_controller(ActuatedThresholdController())
         elif name == "max_pressure":
             self.traffic_controller.set_controller(MaxPressureController())
-        elif name == "fuzzy":
-            self.traffic_controller.set_controller(FuzzyController())
         elif name == "q_learning":
             self.traffic_controller.set_controller(QTableController("q_table_advanced.json"))
         else:
-            self.traffic_controller.set_controller(FixedTimeController(switch_every_s=30))
-            self.controller_name = "fixed_time"
+            self.traffic_controller.set_controller(ActuatedThresholdController())
+            self.controller_name = "actuated"
 
     def reset(self):
         self.traffic_controller = TrafficController()

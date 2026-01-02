@@ -10,22 +10,16 @@ This project was developed as part of an academic assessment focused on knowledg
 ---
 
 ## Implemented Controllers
-The simulator supports five traffic signal control strategies:
+The simulator implements three optimized traffic signal control strategies, selected based on experimental performance analysis:
 
-1. **Fixed-Time Control**  
-   Uses a predefined signal cycle, independent of traffic conditions.
+1. **Actuated Control (Rule-Based)** — Best General-Purpose Controller
+   Extends or switches phases based on observed queue lengths, subject to timing constraints. Demonstrates best average performance across typical urban traffic conditions. Represents explicit knowledge-based systems (KBS).
 
-2. **Actuated Control (Rule-Based)**  
-   Extends or switches phases based on observed queue lengths, subject to timing constraints.
+2. **Max-Pressure Control** — Best for Extreme Conditions + Fairness
+   Selects phases based on queue imbalance between competing directions. Proven optimal in literature, handles both light and heavy traffic extremes, and prevents direction starvation with best fairness metrics. Ideal for rush hour or fairness-critical intersections (near hospitals, emergency routes).
 
-3. **Max-Pressure Control**  
-   Selects phases based on queue imbalance between competing directions.
-
-4. **Fuzzy Logic Control**  
-   Uses fuzzy membership functions and heuristic rules to prioritise phases with higher congestion.
-
-5. **Q-Learning (Reinforcement Learning)**  
-   A tabular Q-learning agent that learns when to switch phases based on a discretised state representation of queues and signal timing.
+3. **Q-Learning (Reinforcement Learning)** — Best Adaptive/Data-Driven Approach
+   A tabular Q-learning agent that learns when to switch phases based on a discretised state representation of queues and signal timing. Best performing among learning algorithms, suitable for new intersections without expert knowledge or environments requiring continuous adaptation. Contrasts rule-engineering vs learning, representing modern AI/ML approaches.
 
 ---
 
@@ -84,10 +78,8 @@ traffic-lights/
 ├── q_table_advanced.json
 │
 ├── metrics/
-│   ├── metrics_fixed.csv
 │   ├── metrics_actuated.csv
 │   ├── metrics_max_pressure.csv
-│   ├── metrics_fuzzy.csv
 │   └── metrics_q_learning.csv
 │
 ├── compare_results.py
@@ -128,11 +120,9 @@ python simulation.py
 ```
 
 ### Keyboard Controls
-- `1` – Fixed-time controller
-- `2` – Actuated controller
-- `3` – Max-pressure controller
-- `4` – Fuzzy logic controller
-- `5` – Q-learning controller
+- `1` – Actuated controller (rule-based)
+- `2` – Max-pressure controller
+- `3` – Q-learning controller
 - `↑ / ↓` – Increase or decrease vehicle spawn rate
 - `R` – Reset simulation
 - `M` – Export current metrics  
@@ -185,7 +175,7 @@ All controllers are evaluated under identical conditions to ensure fair comparis
 ```bash
 python generate_metrics.py
 ```
-Runs all 5 controllers for 120 seconds at normal traffic load (spawn_rate=2.0s).
+Runs all 3 controllers for 120 seconds at normal traffic load (spawn_rate=2.0s).
 
 ### Multi-Load Testing
 ```bash
