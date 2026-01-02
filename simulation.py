@@ -36,17 +36,19 @@ class TrafficSimulation:
 
         self.metrics = {
             "time": [],
+            "qN": [],
+            "qS": [],
+            "qE": [],
+            "qW": [],
             "total_queue": [],
             "vip_queue": [],
-            "phase": []
+            "phase": [],
+            "avg_wait": []
         }
 
-        # Car spawning settings
-        self.spawn_rate = 2.0      # seconds between random spawns
+        self.spawn_rate = 2.0
         self.last_spawn_time = 0
         self.current_time = 0
-
-        self.metrics = {"time": [], "total_queue": [], "vip_queue": [], "phase": []}
 
         self.running = True
 
@@ -101,14 +103,16 @@ class TrafficSimulation:
                     self.car_manager.spawn_car(Direction.WEST, force_vip=True)
 
     def reset(self) -> None:
-        """Resets the simulation state."""
         self.traffic_controller = TrafficController()
         self._apply_controller(self.controller_name)
         self.car_manager = CarManager()
         self.last_spawn_time = 0
         self.current_time = 0
 
-        self.metrics = {"time": [], "total_queue": [], "vip_queue": [], "phase": []}
+        self.metrics = {
+            "time": [], "qN": [], "qS": [], "qE": [], "qW": [],
+            "total_queue": [], "vip_queue": [], "phase": [], "avg_wait": []
+        }
 
 
     def _apply_controller(self, name: str) -> None:
@@ -344,43 +348,51 @@ class TrafficSimulation:
     def update(self, delta_time: float) -> None:
         self.current_time += delta_time
 
-        # Random spawn (with some randomness)
         if self.current_time - self.last_spawn_time > self.spawn_rate * 1000 + random.random() * 1000:
             direction = random.choice(list(Direction))
-            self.car_manager.spawn_car(direction)
+            self.car_manager.spawn_car(direction, current_time=self.current_time)
             self.last_spawn_time = self.current_time
 
-        # Collect queue sizes
         queue_stats = {d: self.car_manager.get_queue_count(d) for d in Direction}
         vip_queue_stats = {d: self.car_manager.get_vip_queue_count(d) for d in Direction}
 
         self.traffic_controller.update(queue_stats, vip_queue_stats, delta_time)
 
-        # Move cars according to light rules
         self.car_manager.update_cars(
             lambda d: self.traffic_controller.get_light_state(d),
-            delta_time
+            delta_time,
+            self.current_time
         )
 
         total_queue = sum(queue_stats.values())
         vip_total_queue = sum(vip_queue_stats.values())
 
-        self.metrics["time"].append(self.current_time / 1000.0)  # seconds
+        self.metrics["time"].append(self.current_time / 1000.0)
+        self.metrics["qN"].append(queue_stats[Direction.NORTH])
+        self.metrics["qS"].append(queue_stats[Direction.SOUTH])
+        self.metrics["qE"].append(queue_stats[Direction.EAST])
+        self.metrics["qW"].append(queue_stats[Direction.WEST])
         self.metrics["total_queue"].append(total_queue)
         self.metrics["vip_queue"].append(vip_total_queue)
         self.metrics["phase"].append(self.traffic_controller.current_phase)
+        self.metrics["avg_wait"].append(self.car_manager.get_avg_wait_time())
 
     def export_metrics(self, filename="metrics.csv"):
         import csv
         with open(filename, "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["time_s", "total_queue", "vip_queue", "phase"])
+            writer.writerow(["time_s", "qN", "qS", "qE", "qW", "total_queue", "vip_queue", "phase", "avg_wait"])
             for i in range(len(self.metrics["time"])):
                 writer.writerow([
                     self.metrics["time"][i],
+                    self.metrics["qN"][i],
+                    self.metrics["qS"][i],
+                    self.metrics["qE"][i],
+                    self.metrics["qW"][i],
                     self.metrics["total_queue"][i],
                     self.metrics["vip_queue"][i],
-                    self.metrics["phase"][i]
+                    self.metrics["phase"][i],
+                    self.metrics["avg_wait"][i]
                 ])
 
 
