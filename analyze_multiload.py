@@ -30,7 +30,7 @@ def analyze_load(files, load_name):
 
         cumulative_queue = 0
         if "total_queue" in df.columns and "time_s" in df.columns:
-            cumulative_queue = np.trapz(df["total_queue"], df["time_s"])
+            cumulative_queue = np.trapezoid(df["total_queue"], df["time_s"])
 
         avg_wait = 0
         if "avg_wait" in df.columns and len(df) > 0:

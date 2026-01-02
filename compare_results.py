@@ -87,7 +87,7 @@ for f, df in dfs.items():
         row["total_switches"] = max(0, switches)
 
     if qcol and tcol:
-        row["cumulative_queue"] = np.trapz(df[qcol], df[tcol])
+        row["cumulative_queue"] = np.trapezoid(df[qcol], df[tcol])
 
     rows.append(row)
 
@@ -128,6 +128,7 @@ if "total_switches" in summary.columns:
     ax.set_xlabel('Controller', fontsize=12)
     ax.set_ylabel('Total Phase Switches', fontsize=12)
     ax.set_title('Phase Switch Count by Controller', fontsize=14, fontweight='bold')
+    ax.set_xticks(range(len(controllers)))
     ax.set_xticklabels(controllers, rotation=15, ha='right')
     ax.grid(True, alpha=0.3, axis='y')
     plt.tight_layout()
@@ -157,6 +158,7 @@ if "cumulative_queue" in summary.columns:
     ax.set_xlabel('Controller', fontsize=12)
     ax.set_ylabel('Cumulative Queue-Time (car·seconds)', fontsize=12)
     ax.set_title('Total Congestion Burden', fontsize=14, fontweight='bold')
+    ax.set_xticks(range(len(controllers)))
     ax.set_xticklabels(controllers, rotation=15, ha='right')
     ax.grid(True, alpha=0.3, axis='y')
     plt.tight_layout()
@@ -192,7 +194,7 @@ if len(dfs) == 1:
 for idx, (f, df) in enumerate(dfs.items()):
     qcol = find_col(df, TOTAL_QUEUE_COLS)
     if qcol:
-        bp = axes[idx].boxplot([df[qcol]], labels=[''], patch_artist=True)
+        bp = axes[idx].boxplot([df[qcol]], tick_labels=[''], patch_artist=True)
         for patch in bp['boxes']:
             patch.set_facecolor('lightgreen')
         axes[idx].set_title(pretty(f), fontweight='bold')
@@ -256,7 +258,7 @@ if has_per_direction:
                 ax.legend()
                 ax.grid(True, alpha=0.3)
                 plt.tight_layout()
-                fname = f.replace("metrics_", "").replace(".csv", "")
+                fname = os.path.basename(f).replace("metrics_", "").replace(".csv", "")
                 plt.savefig(f"results/direction_{fname}.png", dpi=200)
                 plt.close()
 
@@ -267,6 +269,7 @@ if "avg_wait_time" in summary.columns and summary["avg_wait_time"].notna().any()
     ax.set_xlabel('Controller', fontsize=12)
     ax.set_ylabel('Average Wait Time (ms)', fontsize=12)
     ax.set_title('Average Wait Time Per Car', fontsize=14, fontweight='bold')
+    ax.set_xticks(range(len(controllers)))
     ax.set_xticklabels(controllers, rotation=15, ha='right')
     ax.grid(True, alpha=0.3, axis='y')
     plt.tight_layout()
