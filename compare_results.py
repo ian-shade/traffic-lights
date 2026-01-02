@@ -104,29 +104,6 @@ plt.savefig("comparison_plot_vip_queue.png", dpi=200)
 plt.show()
 
 # ---------------------------
-# Plot 3: Switches over time (only if present)
-# ---------------------------
-plt.figure()
-any_plotted = False
-
-for f, df in dfs.items():
-    tcol = find_col(df, TIME_COLS)
-    scol = find_col(df, SWITCHES_COLS)
-    if tcol and scol:
-        plt.plot(df[tcol], df[scol], label=pretty(f))
-        any_plotted = True
-
-plt.xlabel("Time (s)")
-plt.ylabel("Switches")
-plt.title("Controller comparison: Phase switches over time")
-if any_plotted:
-    plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.savefig("comparison_plot_switches.png", dpi=200)
-plt.show()
-
-# ---------------------------
 # Summary table
 # ---------------------------
 rows = []
@@ -184,4 +161,3 @@ summary.to_csv("comparison_summary.csv", index=False)
 print("\nSaved: comparison_summary.csv")
 print("Saved: comparison_plot_total_queue.png")
 print("Saved: comparison_plot_vip_queue.png (if VIP queue existed)")
-print("Saved: comparison_plot_switches.png (if switches existed)")

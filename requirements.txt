@@ -4,9 +4,6 @@
 # $ source env/python/bin/activate
 # $ python3 -m pip install -r requirements.txt
 #
-# For pygame version:
-# $ python3 simulation.py
-#
 # For web version:
 # $ python3 app.py
 # Then open http://localhost:3003
