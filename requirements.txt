@@ -4,6 +4,9 @@
 # $ source env/python/bin/activate
 # $ python3 -m pip install -r requirements.txt
 #
+# For pygame version:
+# $ python3 simulation.py
+#
 # For web version:
 # $ python3 app.py
 # Then open http://localhost:3003
@@ -16,3 +19,8 @@ python-socketio>=5.9.0
 
 # PyGame version (optional)
 pygame>=2.5.0
+
+# Data analysis and visualization
+pandas>=2.0.0
+matplotlib>=3.7.0
+numpy>=1.24.0

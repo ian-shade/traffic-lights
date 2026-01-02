@@ -6,3 +6,6 @@ __pycache__/
 .docs/*
 /env
 /docs
+
+/results
+/metrics

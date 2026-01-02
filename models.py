@@ -22,10 +22,11 @@ class LightState(Enum):
 # Represents a single car in the simulation
 @dataclass
 class Car:
-    id: str                          # unique car identifier
-    direction: Direction             # where the car is coming from
-    position: float                  # distance traveled along the lane
-    speed: float                     # current speed value
-    committed: bool                  # True once the car has passed the stop line
-    color: Tuple[int, int, int]      # RGB color of the car
-    is_vip: bool = False             # True for emergency vehicles (ambulance/police/fire)
+    id: str
+    direction: Direction
+    position: float
+    speed: float
+    committed: bool
+    color: Tuple[int, int, int]
+    is_vip: bool = False
+    spawn_time: float = 0.0

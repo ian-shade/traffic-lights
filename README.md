@@ -40,6 +40,32 @@ The simulator supports five traffic signal control strategies:
 
 ---
 
+## Quick Start
+
+Generate metrics for all controllers and analyze results:
+
+```bash
+python generate_metrics.py
+python compare_results.py
+```
+
+For comprehensive multi-load experiments:
+
+```bash
+python run_multiload_experiments.py
+python analyze_multiload.py
+```
+
+Or run everything at once:
+
+```bash
+python run_full_analysis.py
+```
+
+See [WORKFLOW.md](WORKFLOW.md) for detailed instructions.
+
+---
+
 ## Project Structure
 ```text
 traffic-lights/
@@ -93,20 +119,23 @@ pip install pygame numpy pandas matplotlib
 
 ---
 
-## Running the Simulation
+## Interactive Simulation (Optional)
+
+For visual demonstration and manual testing:
+
 ```bash
-python traffic_sim.py
+python simulation.py
 ```
 
 ### Keyboard Controls
-- `1` – Fixed-time controller  
-- `2` – Actuated controller  
-- `3` – Max-pressure controller  
-- `4` – Fuzzy logic controller  
-- `5` – Q-learning controller  
-- `↑ / ↓` – Increase or decrease vehicle spawn rate  
-- `R` – Reset simulation  
-- `M` – Export metrics to CSV  
+- `1` – Fixed-time controller
+- `2` – Actuated controller
+- `3` – Max-pressure controller
+- `4` – Fuzzy logic controller
+- `5` – Q-learning controller
+- `↑ / ↓` – Increase or decrease vehicle spawn rate
+- `R` – Reset simulation
+- `M` – Export current metrics  
 
 ---
 
@@ -122,38 +151,58 @@ Training metrics such as cumulative reward, average queue length, and switching 
 ---
 
 ## Evaluation and Metrics
-During simulation, the following metrics are collected:
-- Total queue length
-- Per-direction queue lengths (North, South, East, West)
-- VIP queue indicator
-- Number of phase switches
-- Simulation time
 
-Metrics are exported as CSV files and analysed using:
+Generate comprehensive metrics for all controllers:
+
 ```bash
+python generate_metrics.py
 python compare_results.py
 ```
 
-This script generates:
-- Aggregated performance tables
-- Queue comparison plots across controllers
-- VIP queue visualisations
+Collected metrics include:
+- Total queue length
+- Per-direction queue lengths (North, South, East, West)
+- VIP queue counts
+- Phase switches
+- Average wait time per car
+
+Analysis outputs:
+- Performance comparison tables (CSV)
+- Bar charts comparing controllers
+- Queue length time series
+- Phase switch behavior
+- Cumulative congestion burden
+- Distribution plots (histograms, box plots)
+- Per-direction fairness analysis
+- Average wait time comparison
 
 ---
 ## Experimental Setup
-Each controller is evaluated across three simulation runs under identical signal timing constraints:
 
-- A 2-minute simulation with the default vehicle spawn rate  
-- A 5-minute simulation to evaluate performance under sustained traffic conditions  
-- A 2-minute simulation with a reduced vehicle spawn rate (0.5) to assess controller behaviour under lighter demand  
+All controllers are evaluated under identical conditions to ensure fair comparison.
 
-All controllers operate under the same signal timing parameters and vehicle arrival processes within each run, ensuring a fair and consistent comparison across control strategies.
+### Standard Evaluation
+```bash
+python generate_metrics.py
+```
+Runs all 5 controllers for 120 seconds at normal traffic load (spawn_rate=2.0s).
+
+### Multi-Load Testing
+```bash
+python run_multiload_experiments.py
+```
+Evaluates all controllers under three traffic scenarios:
+- **Light traffic** (spawn_rate=3.5s): Low congestion, tests efficiency
+- **Normal traffic** (spawn_rate=2.0s): Typical urban conditions
+- **Heavy traffic** (spawn_rate=1.0s): High demand, stress test
+
+Each run is 120 seconds with identical signal timing constraints and randomization.
 
 ---
 
 ## Authors
 - **Karyme Nahle Acosta**
-- **Ihsan Abourshaid**
-- **Zaema Dar**
+- **Ian**
+- **Zaema**
 
 ---

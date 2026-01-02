@@ -43,12 +43,25 @@ def print_summary(name, data):
 def main():
     metrics = load_metrics()
 
+    episode_rewards = metrics["episode_rewards"]
     episode_avg_queues = metrics["episode_avg_queues"]
+    episode_switches = metrics["episode_switches"]
 
     print("\n=== TRAINING METRICS ANALYSIS ===")
 
     # -------------------------------
-    # Plot: Average Queue Length
+    # Plot 1: Rewards
+    # -------------------------------
+    plot_metric(
+        episode_rewards,
+        "Total Reward per Episode",
+        "Reward",
+        "reward_plot.png"
+    )
+    print_summary("Rewards", episode_rewards)
+
+    # -------------------------------
+    # Plot 2: Average Queue Length
     # -------------------------------
     plot_metric(
         episode_avg_queues,
@@ -57,6 +70,17 @@ def main():
         "queue_plot.png"
     )
     print_summary("Average Queue", episode_avg_queues)
+
+    # -------------------------------
+    # Plot 3: Phase Switches
+    # -------------------------------
+    plot_metric(
+        episode_switches,
+        "Phase Switches per Episode",
+        "Switches",
+        "switch_plot.png"
+    )
+    print_summary("Phase Switches", episode_switches)
 
     print("\nAnalysis complete. PNG files have been saved.")
 
