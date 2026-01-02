@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Intersection Simulation</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🚦 Traffic Intersection Simulation</h1>
+                <div class="controller-badge" id="controllerBadge">Fixed Time</div>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <!-- Sidebar Controls -->
+            <aside class="sidebar">
+                <div class="control-section">
+                    <h3>Controller Type</h3>
+                    <div class="controller-grid">
+                        <button class="controller-btn active" data-controller="fixed_time">
+                            <span class="btn-icon">⏱️</span>
+                            <span class="btn-label">Fixed Time</span>
+                        </button>
+                        <button class="controller-btn" data-controller="actuated">
+                            <span class="btn-icon">📊</span>
+                            <span class="btn-label">Actuated</span>
+                        </button>
+                        <button class="controller-btn" data-controller="max_pressure">
+                            <span class="btn-icon">⚖️</span>
+                            <span class="btn-label">Max Pressure</span>
+                        </button>
+                        <button class="controller-btn" data-controller="fuzzy">
+                            <span class="btn-icon">🧠</span>
+                            <span class="btn-label">Fuzzy Logic</span>
+                        </button>
+                        <button class="controller-btn" data-controller="q_learning">
+                            <span class="btn-icon">🤖</span>
+                            <span class="btn-label">Q-Learning</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Simulation Controls</h3>
+                    <div class="control-group">
+                        <label>Spawn Rate: <span id="spawnRateValue">2.0s</span></label>
+                        <input type="range" id="spawnRate" min="0.5" max="5" step="0.1" value="2.0" class="slider">
+                    </div>
+                    <div class="control-group">
+                        <label>Speed: <span id="speedValue">1.0x</span></label>
+                        <input type="range" id="simSpeed" min="0.25" max="3" step="0.25" value="1.0" class="slider">
+                    </div>
+                    <div class="button-group">
+                        <button id="startBtn" class="btn btn-primary">▶️ Start</button>
+                        <button id="resetBtn" class="btn btn-secondary">🔄 Reset</button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Spawn VIP Cars</h3>
+                    <div class="vip-grid">
+                        <button class="vip-btn" data-direction="NORTH">⬆️ North</button>
+                        <button class="vip-btn" data-direction="SOUTH">⬇️ South</button>
+                        <button class="vip-btn" data-direction="EAST">➡️ East</button>
+                        <button class="vip-btn" data-direction="WEST">⬅️ West</button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Canvas Area -->
+            <main class="canvas-area">
+                <canvas id="canvas"></canvas>
+                <div class="canvas-overlay">
+                    <div id="loadingOverlay" class="loading-overlay">
+                        <div class="spinner"></div>
+                        <p>Connecting to server...</p>
+                    </div>
+                    <!-- Stats Box - Top Right -->
+                    <div class="stats-box">
+                        <div class="stats-box-section">
+                            <h4>Queue Status</h4>
+                            <div class="stats-compact-grid">
+                                <div class="stat-compact">
+                                    <span class="stat-compact-label">N</span>
+                                    <span class="stat-compact-value" id="queueNorth">0</span>
+                                </div>
+                                <div class="stat-compact">
+                                    <span class="stat-compact-label">S</span>
+                                    <span class="stat-compact-value" id="queueSouth">0</span>
+                                </div>
+                                <div class="stat-compact">
+                                    <span class="stat-compact-label">E</span>
+                                    <span class="stat-compact-value" id="queueEast">0</span>
+                                </div>
+                                <div class="stat-compact">
+                                    <span class="stat-compact-label">W</span>
+                                    <span class="stat-compact-value" id="queueWest">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stats-box-divider"></div>
+                        <div class="stats-box-section">
+                            <h4>Phase Info</h4>
+                            <div class="stats-compact-grid">
+                                <div class="stat-compact wide">
+                                    <span class="stat-compact-label">Time</span>
+                                    <span class="stat-compact-value" id="phaseTime">30.0s</span>
+                                </div>
+                                <div class="stat-compact">
+                                    <span class="stat-compact-label">Cars</span>
+                                    <span class="stat-compact-value" id="totalCars">0</span>
+                                </div>
+                                <div class="stat-compact">
+                                    <span class="stat-compact-label">VIP</span>
+                                    <span class="stat-compact-value vip-highlight" id="vipCars">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -354,7 +354,7 @@ class TrafficSimulation:
         queue_stats = {d: self.car_manager.get_queue_count(d) for d in Direction}
         vip_queue_stats = {d: self.car_manager.get_vip_queue_count(d) for d in Direction}
 
-        self.traffic_controller.update(queue_stats, vip_queue_stats)
+        self.traffic_controller.update(queue_stats, vip_queue_stats, delta_time)
 
         # Move cars according to light rules
         self.car_manager.update_cars(
