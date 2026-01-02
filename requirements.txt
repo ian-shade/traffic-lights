@@ -19,3 +19,8 @@ python-socketio>=5.9.0
 
 # PyGame version (optional)
 pygame>=2.5.0
+
+# Data analysis and visualization
+pandas>=2.0.0
+matplotlib>=3.7.0
+numpy>=1.24.0

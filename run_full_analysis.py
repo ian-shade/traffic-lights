@@ -6,10 +6,10 @@ print("COMPLETE TRAFFIC SIMULATION ANALYSIS")
 print("="*70)
 
 steps = [
-    ("1. Generating baseline metrics", "python generate_metrics.py"),
-    ("2. Analyzing baseline results", "python compare_results.py"),
-    ("3. Running multi-load experiments", "python run_multiload_experiments.py"),
-    ("4. Analyzing multi-load results", "python analyze_multiload.py"),
+    ("1. Generating baseline metrics", "python3 generate_metrics.py"),
+    ("2. Analyzing baseline results", "python3 compare_results.py"),
+    ("3. Running multi-load experiments", "python3 run_multiload_experiments.py"),
+    ("4. Analyzing multi-load results", "python3 analyze_multiload.py"),
 ]
 
 print("\nThis will run the complete analysis pipeline:")
