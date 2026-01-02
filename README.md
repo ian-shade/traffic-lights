@@ -153,7 +153,7 @@ All controllers operate under the same signal timing parameters and vehicle arri
 
 ## Authors
 - **Karyme Nahle Acosta**
-- **Ian**
-- **Zaema**
+- **Ihsan Abourshaid**
+- **Zaema Dar**
 
 ---

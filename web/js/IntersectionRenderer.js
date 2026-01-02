@@ -1,235 +1,14 @@
-// Traffic Simulation Frontend - Flask/SocketIO Version
-// Communicates with Python backend via WebSocket
-
-class TrafficSimulationClient {
-    constructor() {
-        this.canvas = document.getElementById('canvas');
-        if (!this.canvas) {
-            console.error('Canvas not found!');
-            return;
-        }
-
-        this.ctx = this.canvas.getContext('2d');
-        this.state = null;
-        this.lastUpdate = Date.now();
-
-        this.initSocket();
-        this.initControls();
-        this.setupResponsiveCanvas();
-        this.startRenderLoop();
+// Intersection Renderer - Handles all intersection and traffic rendering
+class IntersectionRenderer {
+    constructor(canvasManager) {
+        this.canvasManager = canvasManager;
+        this.ctx = canvasManager.getContext();
+        this.canvas = canvasManager.getCanvas();
     }
 
-    setupResponsiveCanvas() {
-        const resizeCanvas = () => {
-            const container = this.canvas.parentElement;
-            const containerRect = container.getBoundingClientRect();
-
-            // Account for padding (2rem = 32px on each side)
-            const padding = 64;
-            const maxWidth = containerRect.width - padding;
-            const maxHeight = containerRect.height - padding;
-
-            // Make canvas size based on the smaller dimension to keep it square
-            const size = Math.min(maxWidth, maxHeight);
-
-            this.canvas.width = size;
-            this.canvas.height = size;
-        };
-
-        // Initial resize
-        resizeCanvas();
-
-        // Resize on window resize
-        window.addEventListener('resize', resizeCanvas);
-
-        // Also resize when sidebar might change (like on mobile)
-        window.addEventListener('orientationchange', () => {
-            setTimeout(resizeCanvas, 100);
-        });
-    }
-
-    initSocket() {
-        // Connect to Flask-SocketIO server
-        this.socket = io();
-
-        this.socket.on('connect', () => {
-            console.log('Connected to server');
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            if (loadingOverlay) {
-                loadingOverlay.classList.add('hidden');
-            }
-        });
-
-        this.socket.on('disconnect', () => {
-            console.log('Disconnected from server');
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            if (loadingOverlay) {
-                loadingOverlay.classList.remove('hidden');
-            }
-        });
-
-        this.socket.on('state_update', (state) => {
-            this.state = state;
-            this.updateUI(state);
-        });
-
-        // Send update requests at 60 FPS
-        setInterval(() => {
-            if (this.state && this.state.running) {
-                const now = Date.now();
-                const deltaTime = now - this.lastUpdate;
-                this.lastUpdate = now;
-                this.socket.emit('update', { delta_time: deltaTime });
-            }
-        }, 1000 / 60);
-    }
-
-    initControls() {
-        // Controller buttons
-        document.querySelectorAll('.controller-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const controller = e.currentTarget.dataset.controller;
-                document.querySelectorAll('.controller-btn').forEach(b => b.classList.remove('active'));
-                e.currentTarget.classList.add('active');
-                this.socket.emit('change_controller', { controller });
-            });
-        });
-
-        // Start/Pause button
-        const startBtn = document.getElementById('startBtn');
-        if (startBtn) {
-            startBtn.addEventListener('click', () => {
-                if (!this.state || !this.state.running) {
-                    this.socket.emit('start');
-                } else {
-                    this.socket.emit('pause');
-                }
-            });
-        }
-
-        // Reset button
-        const resetBtn = document.getElementById('resetBtn');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => {
-                this.socket.emit('reset');
-            });
-        }
-
-        // Spawn rate slider
-        const spawnRate = document.getElementById('spawnRate');
-        if (spawnRate) {
-            const spawnRateValue = document.getElementById('spawnRateValue');
-            spawnRate.addEventListener('input', (e) => {
-                const value = parseFloat(e.target.value);
-                if (spawnRateValue) {
-                    spawnRateValue.textContent = `${value.toFixed(1)}s`;
-                }
-                this.socket.emit('update_spawn_rate', { spawn_rate: value });
-            });
-        }
-
-        // Speed slider
-        const simSpeed = document.getElementById('simSpeed');
-        if (simSpeed) {
-            const speedValue = document.getElementById('speedValue');
-            simSpeed.addEventListener('input', (e) => {
-                const value = parseFloat(e.target.value);
-                if (speedValue) {
-                    speedValue.textContent = `${value.toFixed(2)}x`;
-                }
-                this.socket.emit('update_speed', { speed: value });
-            });
-        }
-
-        // VIP spawn buttons
-        document.querySelectorAll('.vip-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const direction = e.currentTarget.dataset.direction;
-                this.socket.emit('spawn_vip', { direction });
-            });
-        });
-    }
-
-    updateUI(state) {
+    render(state) {
         if (!state) return;
 
-        const updateElement = (id, value) => {
-            const el = document.getElementById(id);
-            if (el) el.textContent = value;
-        };
-
-        // Update queues
-        updateElement('queueNorth', state.queues.north);
-        updateElement('queueSouth', state.queues.south);
-        updateElement('queueEast', state.queues.east);
-        updateElement('queueWest', state.queues.west);
-
-        // Update phase info
-        updateElement('phaseTime', `${(state.phase_time / 1000).toFixed(1)}s`);
-        updateElement('totalCars', state.total_cars);
-        updateElement('vipCars', state.vip_cars);
-
-        // Update controller badge
-        const controllerNames = {
-            'fixed_time': 'Fixed Time',
-            'actuated': 'Actuated',
-            'max_pressure': 'Max Pressure',
-            'fuzzy': 'Fuzzy Logic',
-            'q_learning': 'Q-Learning'
-        };
-        updateElement('controllerBadge', controllerNames[state.controller] || state.controller);
-
-        // Update start/pause button
-        const startBtn = document.getElementById('startBtn');
-        if (startBtn) {
-            startBtn.textContent = state.running ? '⏸️ Pause' : '▶️ Start';
-        }
-
-        // Update active controller button
-        document.querySelectorAll('.controller-btn').forEach(btn => {
-            if (btn.dataset.controller === state.controller) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-
-        // Update sliders to match backend state
-        if (state.spawn_rate !== undefined) {
-            const spawnRateSlider = document.getElementById('spawnRate');
-            const spawnRateValue = document.getElementById('spawnRateValue');
-            if (spawnRateSlider && parseFloat(spawnRateSlider.value) !== state.spawn_rate) {
-                spawnRateSlider.value = state.spawn_rate;
-                if (spawnRateValue) {
-                    spawnRateValue.textContent = `${state.spawn_rate.toFixed(1)}s`;
-                }
-            }
-        }
-
-        if (state.speed_multiplier !== undefined) {
-            const speedSlider = document.getElementById('simSpeed');
-            const speedValue = document.getElementById('speedValue');
-            if (speedSlider && parseFloat(speedSlider.value) !== state.speed_multiplier) {
-                speedSlider.value = state.speed_multiplier;
-                if (speedValue) {
-                    speedValue.textContent = `${state.speed_multiplier.toFixed(2)}x`;
-                }
-            }
-        }
-    }
-
-    startRenderLoop() {
-        const render = () => {
-            if (this.state) {
-                this.renderIntersection();
-            }
-            requestAnimationFrame(render);
-        };
-        render();
-    }
-
-    renderIntersection() {
-        const state = this.state;
         const ctx = this.ctx;
         const canvas = this.canvas;
 
@@ -248,6 +27,15 @@ class TrafficSimulationClient {
 
         // Scale all positions relative to intersection size (base size was 600)
         const scale = intersectionSize / 600;
+
+        this.drawRoad(centerX, centerY, intersectionSize, scale);
+        this.drawTrafficLights(state, centerX, centerY, scale);
+        this.drawCars(state, centerX, centerY, intersectionSize);
+        this.drawCompassLabels(centerX, centerY, intersectionSize, scale);
+    }
+
+    drawRoad(centerX, centerY, intersectionSize, scale) {
+        const ctx = this.ctx;
 
         // Draw road base
         ctx.fillStyle = '#374151';
@@ -273,8 +61,9 @@ class TrafficSimulationClient {
         ctx.fillRect(centerX + 250 * scale, centerY + 348 * scale, 100 * scale, 4 * scale);
         ctx.fillRect(centerX + 248 * scale, centerY + 250 * scale, 4 * scale, 100 * scale);
         ctx.fillRect(centerX + 348 * scale, centerY + 250 * scale, 4 * scale, 100 * scale);
+    }
 
-        // Draw traffic lights at proper positions for each direction
+    drawTrafficLights(state, centerX, centerY, scale) {
         // East (right side, vertical light)
         this.drawTrafficLight(centerX + 360 * scale, centerY + 245 * scale, state.lights.east, false, scale);
 
@@ -286,23 +75,6 @@ class TrafficSimulationClient {
 
         // South (top, horizontal light)
         this.drawTrafficLight(centerX + 265 * scale, centerY + 220 * scale, state.lights.south, true, scale);
-
-        // Draw cars
-        for (const car of state.cars) {
-            this.drawCar(car, centerX, centerY, intersectionSize);
-        }
-
-        // Draw compass labels
-        ctx.shadowColor = 'rgba(99, 102, 241, 0.5)';
-        ctx.shadowBlur = 10 * scale;
-        ctx.fillStyle = '#f1f5f9';
-        ctx.font = `bold ${24 * scale}px Arial`;
-        ctx.textAlign = 'center';
-        ctx.fillText('N', centerX + 300 * scale, centerY + 30 * scale);
-        ctx.fillText('S', centerX + 300 * scale, centerY + intersectionSize - 10 * scale);
-        ctx.fillText('E', centerX + intersectionSize - 20 * scale, centerY + 310 * scale);
-        ctx.fillText('W', centerX + 30 * scale, centerY + 310 * scale);
-        ctx.shadowBlur = 0;
     }
 
     drawTrafficLight(x, y, state, horizontal, scale = 1) {
@@ -361,6 +133,12 @@ class TrafficSimulationClient {
             ctx.fillStyle = greenColor;
             ctx.fill();
             ctx.shadowBlur = 0;
+        }
+    }
+
+    drawCars(state, centerX, centerY, intersectionSize) {
+        for (const car of state.cars) {
+            this.drawCar(car, centerX, centerY, intersectionSize);
         }
     }
 
@@ -505,9 +283,18 @@ class TrafficSimulationClient {
         ctx.roundRect(-width/2, -height/2, width, height, 3 * detailScale);
         ctx.stroke();
     }
-}
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    new TrafficSimulationClient();
-});
+    drawCompassLabels(centerX, centerY, intersectionSize, scale) {
+        const ctx = this.ctx;
+        ctx.shadowColor = 'rgba(99, 102, 241, 0.5)';
+        ctx.shadowBlur = 10 * scale;
+        ctx.fillStyle = '#f1f5f9';
+        ctx.font = `bold ${24 * scale}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.fillText('N', centerX + 300 * scale, centerY + 30 * scale);
+        ctx.fillText('S', centerX + 300 * scale, centerY + intersectionSize - 10 * scale);
+        ctx.fillText('E', centerX + intersectionSize - 20 * scale, centerY + 310 * scale);
+        ctx.fillText('W', centerX + 30 * scale, centerY + 310 * scale);
+        ctx.shadowBlur = 0;
+    }
+}

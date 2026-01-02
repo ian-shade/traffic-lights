@@ -1,0 +1,37 @@
+/* Sidebar Component */
+.sidebar {
+    width: 320px;
+    background: rgba(51, 65, 85, 0.5);
+    backdrop-filter: blur(10px);
+    border-right: 1px solid var(--border-color);
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: var(--dark-bg);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.control-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: rgba(30, 41, 59, 0.6);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.control-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
