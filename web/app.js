@@ -171,11 +171,9 @@ class TrafficSimulationClient {
 
         // Update controller badge
         const controllerNames = {
-            'fixed_time': 'Fixed Time',
-            'actuated': 'Actuated',
-            'max_pressure': 'Max Pressure',
-            'fuzzy': 'Fuzzy Logic',
-            'q_learning': 'Q-Learning'
+            'actuated': 'Actuated (Rule-Based)',
+            'max_pressure': 'Max Pressure (Fairness)',
+            'q_learning': 'Q-Learning (AI/ML)'
         };
         updateElement('controllerBadge', controllerNames[state.controller] || state.controller);
 
