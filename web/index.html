@@ -12,7 +12,7 @@
         <header class="header">
             <div class="header-content">
                 <h1>🚦 Traffic Intersection Simulation</h1>
-                <div class="controller-badge" id="controllerBadge">Fixed Time</div>
+                <div class="controller-badge" id="controllerBadge">Actuated</div>
             </div>
         </header>
 
@@ -22,25 +22,20 @@
                 <div class="control-section">
                     <h3>Controller Type</h3>
                     <div class="controller-grid">
-                        <button class="controller-btn active" data-controller="fixed_time">
-                            <span class="btn-icon">⏱️</span>
-                            <span class="btn-label">Fixed Time</span>
-                        </button>
-                        <button class="controller-btn" data-controller="actuated">
+                        <button class="controller-btn active" data-controller="actuated">
                             <span class="btn-icon">📊</span>
                             <span class="btn-label">Actuated</span>
+                            <span class="btn-subtitle">Rule-Based</span>
                         </button>
                         <button class="controller-btn" data-controller="max_pressure">
                             <span class="btn-icon">⚖️</span>
                             <span class="btn-label">Max Pressure</span>
-                        </button>
-                        <button class="controller-btn" data-controller="fuzzy">
-                            <span class="btn-icon">🧠</span>
-                            <span class="btn-label">Fuzzy Logic</span>
+                            <span class="btn-subtitle">Fairness</span>
                         </button>
                         <button class="controller-btn" data-controller="q_learning">
                             <span class="btn-icon">🤖</span>
                             <span class="btn-label">Q-Learning</span>
+                            <span class="btn-subtitle">AI/ML</span>
                         </button>
                     </div>
                 </div>

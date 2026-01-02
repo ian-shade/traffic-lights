@@ -14,7 +14,7 @@ configs = [
     {"name": "heavy", "spawn_rate": 1.0, "duration": 120},
 ]
 
-controllers = ["fixed_time", "actuated", "max_pressure", "fuzzy", "q_learning"]
+controllers = ["actuated", "max_pressure", "q_learning"]
 
 print("="*60)
 print("MULTI-LOAD TRAFFIC SIMULATION EXPERIMENT")

@@ -8,7 +8,7 @@ from simulation import TrafficSimulation
 
 os.makedirs("metrics", exist_ok=True)
 
-controllers = ["fixed_time", "actuated", "max_pressure", "fuzzy", "q_learning"]
+controllers = ["actuated", "max_pressure", "q_learning"]
 spawn_rate = 2.0
 duration_s = 120
 
