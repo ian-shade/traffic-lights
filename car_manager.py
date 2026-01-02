@@ -26,26 +26,19 @@ class CarManager:
     VIP_SPAWN_PROB = 0.03  # probability of a random VIP spawn
 
     def __init__(self):
-        # All active cars
         self.cars: List[Car] = []
         self.next_id = 0
+        self.completed_cars: List[tuple] = []
 
-        # Road layout values
         self.stop_line_position = 290
         self.intersection_end = 450
         self.max_speed = 0.4
-        self.min_distance = 40  # minimum gap between cars
+        self.min_distance = 40
 
-    def spawn_car(self, direction: Direction, force_vip: bool = False) -> None:
-        """Creates a new car, sometimes VIP depending on probability or manual override."""
-
-        # Decide if this will be a VIP car
+    def spawn_car(self, direction: Direction, force_vip: bool = False, current_time: float = 0.0) -> None:
         is_vip = force_vip or (random.random() < self.VIP_SPAWN_PROB)
-
-        # Pick color depending on type
         color = random.choice(self.VIP_COLORS if is_vip else self.CAR_COLORS)
 
-        # Create the car
         car = Car(
             id=f"car-{self.next_id}",
             direction=direction,
@@ -53,15 +46,14 @@ class CarManager:
             speed=self.max_speed,
             committed=False,
             color=color,
-            is_vip=is_vip
+            is_vip=is_vip,
+            spawn_time=current_time
         )
 
         self.next_id += 1
         self.cars.append(car)
 
-    def update_cars(self, get_light_state, delta_time: float) -> None:
-        """Moves cars forward and applies stopping rules based on traffic lights."""
-
+    def update_cars(self, get_light_state, delta_time: float, current_time: float = 0.0) -> None:
         cars_by_direction = self._group_cars_by_direction()
 
         for car in self.cars:
@@ -114,11 +106,14 @@ class CarManager:
                     if distance_to_stop < 80:
                         target_speed = min(target_speed, distance_to_stop / 10.0)
 
-            # Smooth transition to target speed
             car.speed += (target_speed - car.speed) * 0.1
-
-            # Move car
             car.position += car.speed * delta_time
+
+        completed = [c for c in self.cars if c.position >= 600]
+        for car in completed:
+            wait_time = current_time - car.spawn_time
+            self.completed_cars.append((wait_time, car.is_vip))
+        self.cars = [c for c in self.cars if c.position < 600]
 
     def _group_cars_by_direction(self) -> Dict[Direction, List[Car]]:
         """Groups cars by the direction of their lane."""
@@ -160,5 +155,9 @@ class CarManager:
         return self.cars
 
     def clear_cars(self) -> None:
-        """Removes all cars from the simulation."""
         self.cars = []
+
+    def get_avg_wait_time(self) -> float:
+        if not self.completed_cars:
+            return 0.0
+        return sum(wt for wt, _ in self.completed_cars) / len(self.completed_cars)
