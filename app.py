@@ -2,7 +2,7 @@
 Flask API server for Traffic Intersection Simulation
 Serves the web frontend and provides WebSocket for real-time simulation
 """
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 import random
@@ -22,6 +22,9 @@ app = Flask(__name__, static_folder='web', static_url_path='')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'traffic-simulation-secret')
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+
+# Store per-session simulation states
+sessions = {}
 
 class SimulationState:
     def __init__(self):
@@ -117,7 +120,12 @@ class SimulationState:
             'running': self.running
         }
 
-sim_state = SimulationState()
+def get_session_state():
+    """Get or create simulation state for current session"""
+    sid = request.sid
+    if sid not in sessions:
+        sessions[sid] = SimulationState()
+    return sessions[sid]
 
 @app.route('/')
 def index():
@@ -125,58 +133,75 @@ def index():
 
 @socketio.on('connect')
 def handle_connect():
-    print('Client connected')
-    # Reset simulation state on new connection (page refresh)
-    sim_state.reset()
-    emit('state_update', sim_state.get_state_dict())
+    sid = request.sid
+    print(f'Client connected: {sid}')
+    # Create new simulation state for this session
+    sessions[sid] = SimulationState()
+    emit('state_update', sessions[sid].get_state_dict())
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    sid = request.sid
+    print(f'Client disconnected: {sid}')
+    # Clean up session state
+    if sid in sessions:
+        del sessions[sid]
 
 @socketio.on('start')
 def handle_start():
+    sim_state = get_session_state()
     sim_state.running = True
-    emit('state_update', sim_state.get_state_dict(), broadcast=True)
+    emit('state_update', sim_state.get_state_dict())
 
 @socketio.on('pause')
 def handle_pause():
+    sim_state = get_session_state()
     sim_state.running = not sim_state.running
-    emit('state_update', sim_state.get_state_dict(), broadcast=True)
+    emit('state_update', sim_state.get_state_dict())
 
 @socketio.on('reset')
 def handle_reset():
+    sim_state = get_session_state()
     sim_state.reset()
-    emit('state_update', sim_state.get_state_dict(), broadcast=True)
+    emit('state_update', sim_state.get_state_dict())
 
 @socketio.on('update')
 def handle_update(data):
+    sim_state = get_session_state()
     if sim_state.running:
         delta_time = data.get('delta_time', 16.67) * sim_state.speed_multiplier
         sim_state.update(delta_time)
-        emit('state_update', sim_state.get_state_dict(), broadcast=True)
+        emit('state_update', sim_state.get_state_dict())
 
 @socketio.on('change_controller')
 def handle_change_controller(data):
+    sim_state = get_session_state()
     controller_name = data.get('controller', 'fixed_time')
     sim_state.controller_name = controller_name
     sim_state.reset()
-    emit('state_update', sim_state.get_state_dict(), broadcast=True)
+    emit('state_update', sim_state.get_state_dict())
 
 @socketio.on('spawn_vip')
 def handle_spawn_vip(data):
+    sim_state = get_session_state()
     direction_str = data.get('direction', 'NORTH').upper()
     direction = Direction[direction_str]
     sim_state.car_manager.spawn_car(direction, force_vip=True)
-    emit('state_update', sim_state.get_state_dict(), broadcast=True)
+    emit('state_update', sim_state.get_state_dict())
 
 @socketio.on('update_spawn_rate')
 def handle_update_spawn_rate(data):
+    sim_state = get_session_state()
     spawn_rate = data.get('spawn_rate', 2.0)
     sim_state.spawn_rate = max(0.5, min(5.0, spawn_rate))
-    emit('state_update', sim_state.get_state_dict(), broadcast=True)
+    emit('state_update', sim_state.get_state_dict())
 
 @socketio.on('update_speed')
 def handle_update_speed(data):
+    sim_state = get_session_state()
     speed = data.get('speed', 1.0)
     sim_state.speed_multiplier = max(0.25, min(3.0, speed))
-    emit('state_update', sim_state.get_state_dict(), broadcast=True)
+    emit('state_update', sim_state.get_state_dict())
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 3003))
