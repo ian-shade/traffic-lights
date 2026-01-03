@@ -6,6 +6,7 @@ from flask import Flask, send_from_directory
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 import random
+import os
 from typing import Dict
 
 from models import Direction, LightState, Car
@@ -18,9 +19,9 @@ from controllers import (
 )
 
 app = Flask(__name__, static_folder='web', static_url_path='')
-app.config['SECRET_KEY'] = 'traffic-simulation-secret'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'traffic-simulation-secret')
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 class SimulationState:
     def __init__(self):
@@ -178,10 +179,13 @@ def handle_update_speed(data):
     emit('state_update', sim_state.get_state_dict(), broadcast=True)
 
 if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 3003))
+    debug = os.environ.get('FLASK_ENV') != 'production'
+
     print("=" * 60)
     print("🚦 Traffic Simulation Web Server")
     print("=" * 60)
-    print("📡 Server running at: http://localhost:3003")
+    print(f"📡 Server running at: http://0.0.0.0:{port}")
     print("🌐 Open this URL in your browser to view the simulation")
     print("=" * 60)
-    socketio.run(app, debug=True, host='0.0.0.0', port=3003)
+    socketio.run(app, debug=debug, host='0.0.0.0', port=port)
