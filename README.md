@@ -24,7 +24,7 @@ python3 app.py
 ```
 Then open **http://localhost:3003**
 
-3. **Or run experiments:**
+3. **Or run analysis:**
 ```bash
 # Complete analysis pipeline
 python3 run_full_analysis.py
@@ -70,31 +70,12 @@ eventlet>=0.33.3
 
 ---
 
-## Project Structure
-
-```
-traffic-lights-main/
-├── app.py                          # Flask server
-├── simulation.py                    # Pygame simulation
-├── controllers.py                   # All 3 controllers
-├── train_q_learning_advanced.py    # Q-Learning training
-├── q_table_advanced.json           # Trained policy
-├── run_multiload_experiments.py    # Multi-load testing
-├── analyze_multiload.py            # Analysis
-├── web/                            # Frontend (HTML/CSS/JS)
-└── results/                        # Visualizations
-```
-
----
-
 
 ## Training Q-Learning
 
 ```bash
 python3 train_q_learning_advanced.py
 ```
-
-**Config:** 3,000 episodes, α=0.2, γ=0.99, 1,458 states, 2 actions
 
 ---
 
