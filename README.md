@@ -1,194 +1,113 @@
-# 🚦 Intelligent Traffic Light Control Simulation
+# 🚦 Traffic Signal Control Simulation
 
-## Overview
-This project implements a four-way traffic intersection simulator with multiple intelligent traffic signal control strategies. The objective is to evaluate different decision-making approaches under uncertain traffic demand and compare their effectiveness in reducing congestion and queue lengths.
+A traffic intersection simulator comparing three intelligent control strategies: **Actuated** (rule-based), **Max-Pressure** (optimization), and **Q-Learning** (reinforcement learning).
 
-The simulation models a realistic urban intersection with North, South, East, and West approaches, enforcing minimum green times, yellow phases, and stochastic vehicle arrivals. Several control strategies are implemented and evaluated under identical conditions.
-
-This project was developed as part of an academic assessment focused on knowledge-based systems and decision-making under uncertainty.
-
----
-
-## Implemented Controllers
-The simulator implements three optimized traffic signal control strategies, selected based on experimental performance analysis:
-
-1. **Actuated Control (Rule-Based)** — Best General-Purpose Controller
-   Extends or switches phases based on observed queue lengths, subject to timing constraints. Demonstrates best average performance across typical urban traffic conditions. Represents explicit knowledge-based systems (KBS).
-
-2. **Max-Pressure Control** — Best for Extreme Conditions + Fairness
-   Selects phases based on queue imbalance between competing directions. Proven optimal in literature, handles both light and heavy traffic extremes, and prevents direction starvation with best fairness metrics. Ideal for rush hour or fairness-critical intersections (near hospitals, emergency routes).
-
-3. **Q-Learning (Reinforcement Learning)** — Best Adaptive/Data-Driven Approach
-   A tabular Q-learning agent that learns when to switch phases based on a discretised state representation of queues and signal timing. Best performing among learning algorithms, suitable for new intersections without expert knowledge or environments requiring continuous adaptation. Contrasts rule-engineering vs learning, representing modern AI/ML approaches.
-
----
-
-## Simulation Features
-- Four-way intersection (N, S, E, W)
-- Realistic traffic light phases (green, yellow, red)
-- Minimum green time enforcement
-- Stochastic vehicle spawning
-- Optional VIP vehicle tracking
-- Real-time visualisation using Pygame
-- Metric logging and CSV export for offline analysis
 
 ---
 
 ## Quick Start
 
-Generate metrics for all controllers and analyze results:
+### Web Interface (Easiest)
+Visit **https://trafficlight.ianshade.com/** to see the simulation in action.
 
+### Run Locally
+
+1. **Install dependencies:**
 ```bash
-python generate_metrics.py
-python compare_results.py
+pip install -r requirements.txt
 ```
 
-For comprehensive multi-load experiments:
-
+2. **Start the web server:**
 ```bash
+python app.py
+```
+Then open `http://localhost:3003`
+
+3. **Or run experiments:**
+```bash
+# Complete analysis pipeline
+python run_full_analysis.py
+
+# Multi-load experiments
 python run_multiload_experiments.py
 python analyze_multiload.py
-```
-
-Or run everything at once:
-
-```bash
-python run_full_analysis.py
-```
-
-See [WORKFLOW.md](WORKFLOW.md) for detailed instructions.
-
----
-
-## Project Structure
-```text
-traffic-lights/
-│
-├── traffic_sim.py
-├── car_manager.py
-├── traffic_light.py
-├── controllers/
-│   ├── fixed_time.py
-│   ├── actuated.py
-│   ├── max_pressure.py
-│   ├── fuzzy_controller.py
-│   └── q_learning_controller.py
-│
-├── train_q_learning_advanced.py
-├── q_table_advanced.json
-│
-├── metrics/
-│   ├── metrics_actuated.csv
-│   ├── metrics_max_pressure.csv
-│   └── metrics_q_learning.csv
-│
-├── compare_results.py
-├── comparison_summary.csv
-│
-├── plots/
-│   ├── reward_plot.png
-│   ├── queue_plot.png
-│   ├── switch_plot.png
-│   ├── comparison_plot_total_queue.png
-│   └── comparison_plot_vip_queue.png
-│
-└── README.md
 ```
 
 ---
 
 ## Requirements
-- Python 3.9+
-- Pygame
-- NumPy
-- Pandas
-- Matplotlib
 
-Install dependencies:
-```bash
-pip install pygame numpy pandas matplotlib
+```txt
+flask>=2.3.0
+flask-socketio>=5.3.0
+flask-cors>=4.0.0
+python-socketio>=5.9.0
+pygame>=2.5.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+numpy>=1.24.0
+gunicorn>=21.2.0
+eventlet>=0.33.3
 ```
 
 ---
 
-## Interactive Simulation (Optional)
+## Controllers
 
-For visual demonstration and manual testing:
+### 1. Actuated (Rule-Based)
+- Uses threshold logic: switches when opposing queue > 6 vehicles
+- Best for: Normal traffic (1.65 avg queue)
 
-```bash
-python simulation.py
-```
+### 2. Max-Pressure (Optimization)
+- Calculates pressure differentials between directions
+- Best for: Extreme conditions (heavy: 3.19) and fairness (0.101 variance)
 
-### Keyboard Controls
-- `1` – Actuated controller (rule-based)
-- `2` – Max-pressure controller
-- `3` – Q-learning controller
-- `↑ / ↓` – Increase or decrease vehicle spawn rate
-- `R` – Reset simulation
-- `M` – Export current metrics  
+### 3. Q-Learning (Reinforcement Learning)
+- Trained agent with 1,458 state space over 3,000 episodes
+- Training: α=0.2, γ=0.99, ε=0.3→0.05
+- Best for: Normal traffic efficiency, but fails in heavy traffic (6.97)
 
 ---
 
-## Training the Q-Learning Agent
+## Project Structure
+
+```
+traffic-lights-main/
+├── app.py                          # Flask server
+├── simulation.py                    # Pygame simulation
+├── controllers.py                   # All 3 controllers
+├── train_q_learning_advanced.py    # Q-Learning training
+├── q_table_advanced.json           # Trained policy
+├── run_multiload_experiments.py    # Multi-load testing
+├── analyze_multiload.py            # Analysis
+├── web/                            # Frontend (HTML/CSS/JS)
+└── results/                        # Visualizations
+```
+
+---
+
+## Key Findings
+
+| Traffic Load | Actuated | Max-Pressure | Q-Learning |
+|--------------|----------|--------------|------------|
+| Light (3.5s) | 1.14 | **1.14** ✓ | 1.14 |
+| Normal (2.0s) | **1.65** ✓ | 1.33 | 2.01 |
+| Heavy (1.0s) | 5.46 | **3.19** ✓ | 6.97 ❌ |
+
+**Conclusion:** No single winner. Max-Pressure excels in extremes, Actuated wins normal traffic, Q-Learning needs diverse training.
+
+---
+
+## Training Q-Learning
+
 ```bash
 python train_q_learning_advanced.py
 ```
 
-This script trains a tabular Q-learning agent through repeated simulation episodes.  
-The learned policy is stored in `q_table_advanced.json`.  
-Training metrics such as cumulative reward, average queue length, and switching behaviour are logged and visualised.
+**Config:** 3,000 episodes, α=0.2, γ=0.99, 1,458 states, 2 actions
 
 ---
 
-## Evaluation and Metrics
-
-Generate comprehensive metrics for all controllers:
-
-```bash
-python generate_metrics.py
-python compare_results.py
-```
-
-Collected metrics include:
-- Total queue length
-- Per-direction queue lengths (North, South, East, West)
-- VIP queue counts
-- Phase switches
-- Average wait time per car
-
-Analysis outputs:
-- Performance comparison tables (CSV)
-- Bar charts comparing controllers
-- Queue length time series
-- Phase switch behavior
-- Cumulative congestion burden
-- Distribution plots (histograms, box plots)
-- Per-direction fairness analysis
-- Average wait time comparison
-
----
-## Experimental Setup
-
-All controllers are evaluated under identical conditions to ensure fair comparison.
-
-### Standard Evaluation
-```bash
-python generate_metrics.py
-```
-Runs all 3 controllers for 120 seconds at normal traffic load (spawn_rate=2.0s).
-
-### Multi-Load Testing
-```bash
-python run_multiload_experiments.py
-```
-Evaluates all controllers under three traffic scenarios:
-- **Light traffic** (spawn_rate=3.5s): Low congestion, tests efficiency
-- **Normal traffic** (spawn_rate=2.0s): Typical urban conditions
-- **Heavy traffic** (spawn_rate=1.0s): High demand, stress test
-
-Each run is 120 seconds with identical signal timing constraints and randomization.
-
----
 
 ## Authors
 - **Karyme Nahle Acosta**
