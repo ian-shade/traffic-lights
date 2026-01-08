@@ -2,7 +2,6 @@
 
 A traffic intersection simulator comparing three intelligent control strategies: **Actuated** (rule-based), **Max-Pressure** (optimization), and **Q-Learning** (reinforcement learning).
 
-
 ---
 
 ## Quick Start
@@ -12,25 +11,27 @@ Visit **https://trafficlight.ianshade.com/** to see the simulation in action.
 
 ### Run Locally
 
-1. **Install dependencies:**
+1. **Create virtual environment and install dependencies:**
 ```bash
-pip install -r requirements.txt
+python3 -m venv env/python
+source env/python/bin/activate
+python3 -m pip install -r requirements.txt
 ```
 
 2. **Start the web server:**
 ```bash
-python app.py
+python3 app.py
 ```
-Then open `http://localhost:3003`
+Then open **http://localhost:3003**
 
 3. **Or run experiments:**
 ```bash
 # Complete analysis pipeline
-python run_full_analysis.py
+python3 run_full_analysis.py
 
 # Multi-load experiments
-python run_multiload_experiments.py
-python analyze_multiload.py
+python3 run_multiload_experiments.py
+python3 analyze_multiload.py
 ```
 
 ---
@@ -86,22 +87,11 @@ traffic-lights-main/
 
 ---
 
-## Key Findings
-
-| Traffic Load | Actuated | Max-Pressure | Q-Learning |
-|--------------|----------|--------------|------------|
-| Light (3.5s) | 1.14 | **1.14** ✓ | 1.14 |
-| Normal (2.0s) | **1.65** ✓ | 1.33 | 2.01 |
-| Heavy (1.0s) | 5.46 | **3.19** ✓ | 6.97 ❌ |
-
-**Conclusion:** No single winner. Max-Pressure excels in extremes, Actuated wins normal traffic, Q-Learning needs diverse training.
-
----
 
 ## Training Q-Learning
 
 ```bash
-python train_q_learning_advanced.py
+python3 train_q_learning_advanced.py
 ```
 
 **Config:** 3,000 episodes, α=0.2, γ=0.99, 1,458 states, 2 actions
@@ -110,8 +100,8 @@ python train_q_learning_advanced.py
 
 
 ## Authors
-- **Karyme Nahle Acosta**
-- **Ian**
-- **Zaema**
+- Zaema Dar
+- Karyme Nahle Acosta
+- Ihsan Abourshaid
 
 ---
